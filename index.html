@@ -1,25 +1,58 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <title>FCK AFD Image Blender (DOM-Konfetti, 5s 10x mehr)</title>
+  <meta charset="UTF-8">
+  <title>FCK AFD Bildmischer ;)</title>
 
-  <!-- Cropper.js per CDN -->
+  <!-- Cropper.js (CDN) -->
   <link rel="stylesheet" href="https://unpkg.com/cropperjs/dist/cropper.css" />
 
   <style>
+    /* --- Grundlayout --- */
     body {
+      margin: 0; 
+      padding: 0;
       font-family: sans-serif;
       background-color: #f8dfd5;
-      margin: 0; 
-      padding: 0; 
       text-align: center;
+      color: #333;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      padding: 15px;
     }
     h1 {
-      margin: 20px 0;
+      margin: 0;
+      font-size: 1.6rem;
+      color: #b84b37;
+    }
+    main {
+      flex: 1; /* füllt den mittleren Bereich */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    footer {
+      position: relative;
+      background: #f2bca2;
+      padding: 10px;
+      color: #7b3f2f;
+      font-size: 0.9rem;
+    }
+    #mixCounter {
+      position: absolute;
+      right: 20px;
+      bottom: 10px;
+      font-weight: bold;
+      background: #ffffff33; 
+      padding: 5px 10px;
+      border-radius: 5px;
     }
 
-    /* Drag & Drop Box */
+    /* --- Drag & Drop Box --- */
     #dropZone {
       margin: 20px auto;
       width: 300px;
@@ -37,12 +70,13 @@
     }
     #dropZone p {
       max-width: 80%;
-      font-size: 16px;
+      font-size: 14px;
       color: #7b3f2f;
+      margin: 0;
     }
 
-    /* Mischen & Download-Button */
-    #processButton {
+    /* --- Mix-Button --- */
+    #mixButton {
       margin-top: 10px;
       padding: 10px 20px;
       background: #b84b37;
@@ -50,11 +84,16 @@
       border: none;
       cursor: pointer;
       display: none;
+      font-size: 1rem;
+      border-radius: 4px;
+    }
+    #mixButton:hover {
+      background: #a43e31;
     }
 
-    /* Overlay-Icons */
+    /* --- Overlays --- */
     #iconContainer {
-      margin: 30px auto;
+      margin: 20px auto;
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
@@ -62,20 +101,24 @@
       max-width: 600px;
     }
     .overlayIcon {
-      width: 100px;
-      height: 100px;
+      width: 90px;
+      height: 90px;
       object-fit: cover;
       cursor: pointer;
       border: 2px solid transparent;
       transition: border 0.3s;
+      border-radius: 4px;
+    }
+    .overlayIcon:hover {
+      border-color: #da8f6b;
     }
     .overlayIcon.selected {
       border: 2px solid #b84b37;
     }
 
-    /* Vorschau */
+    /* --- Preview (dummy) --- */
     #preview {
-      margin: 20px auto;
+      margin-top: 20px;
       width: 300px;
       height: auto;
       display: none;
@@ -85,15 +128,13 @@
       display: none;
     }
 
-    /* Crop-Dialog */
+    /* --- Crop-Dialog (Overlay) --- */
     #cropModal {
       position: fixed;
-      top: 0; 
-      left: 0;
-      width: 100%; 
-      height: 100%;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
       background-color: rgba(0,0,0,0.6);
-      display: none;
+      display: none; 
       align-items: center;
       justify-content: center;
       z-index: 9999;
@@ -102,7 +143,6 @@
       background: #fff;
       padding: 20px;
       border-radius: 6px;
-      position: relative;
       max-width: 90%;
       max-height: 90%;
       display: flex;
@@ -111,125 +151,217 @@
     }
     #cropImage {
       max-width: 100%;
-      max-height: 80vh;
+      max-height: 70vh;
+      border: 1px solid #ccc;
     }
     #cropButtons {
       margin-top: 20px;
+      text-align: center;
     }
-    #confirmCropBtn {
+    .modalBtn {
       background-color: #b84b37;
       color: #fff;
       border: none;
       padding: 10px 20px;
       cursor: pointer;
-      margin-right: 10px;
+      margin: 0 5px;
+      border-radius: 4px;
+    }
+    .modalBtn:hover {
+      background-color: #a43e31;
     }
     #cancelCropBtn {
       background-color: #ccc;
       color: #333;
-      border: none;
-      padding: 10px 20px;
-      cursor: pointer;
+    }
+    #cancelCropBtn:hover {
+      background-color: #bbb;
     }
 
-    /* DOM-Konfetti-Container */
+    /* --- Ergebnis-Dialog (mit weißem Rahmen) --- */
+    #resultModal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background-color: rgba(0,0,0,0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    #resultModalContent {
+      background: #fff;
+      border-radius: 6px;
+      max-width: 500px;
+      position: relative;
+      /* Der Rahmen ist einfach viel Padding */
+      padding: 20px 20px 60px 20px; 
+      /* extra großer unterer Bereich */
+    }
+    #finalImage {
+      display: block;
+      max-width: 100%;
+      border-radius: 4px;
+      margin: 0 auto;
+    }
+    #downloadBtn {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #b84b37;
+      color: #fff;
+      border: none;
+      padding: 10px 30px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    #downloadBtn:hover {
+      background-color: #a43e31;
+    }
+
+    /* --- DOM-Konfetti-Container & Animationen --- */
     #confetti-container {
       position: fixed; 
       top: 0; 
       left: 0;
       width: 100%;
       height: 100%;
-      pointer-events: none;  /* Klicks "durchreichen" */
+      pointer-events: none;  /* Klicks gehen "durch" */
       overflow: hidden;
-      z-index: 9999999;      /* ganz oben */
+      z-index: 99999999;     /* über allen Modals */
     }
+
     .confetti {
       position: absolute;
       width: 8px;
       height: 16px;
       background-color: red; /* via JS überschrieben */
       opacity: 0.9;
+      /* Falls du Ecken abrunden willst:
+         border-radius: 4px; */
       top: 0;
       left: 50%;
       transform-origin: center;
-      /* Animation jetzt 5s statt 3s */
       animation: fall 5s linear forwards;
     }
-    /* Keyframes auf 5s angepasst */
+
+    /* Keyframes mit horizontaler Drift (CSS-Variablen) */
     @keyframes fall {
-      0%   { transform: translateY(-10vh) rotate(0deg); }
-      100% { transform: translateY(110vh) rotate(720deg); }
+      0% {
+        top: -10vh;
+        left: var(--startX);
+        transform: rotate(0deg);
+      }
+      100% {
+        top: 110vh;
+        left: var(--endX);
+        transform: rotate(720deg);
+      }
     }
+
   </style>
 </head>
 <body>
-  <h1>FCK AFD Image Blender (DOM-Konfetti, 5s & 10× mehr)</h1>
 
-  <!-- Drag & Drop / Upload-Box -->
-  <div id="dropZone">
-    <p>Ziehe dein Bild hierher<br/>oder klicke zum Auswählen.</p>
-  </div>
-  <button id="processButton">Mischen &amp; Download</button>
+  <header>
+    <h1>FCK AFD Bildmischer ;)</h1>
+  </header>
 
-  <!-- Vorschau (Dummybild) -->
-  <img id="preview" src="dummy.png" alt="Bildvorschau" />
+  <main>
+    <!-- Drag & Drop / Upload -->
+    <div id="dropZone">
+      <p>Ziehe dein Bild hierher<br/>oder klicke zum Auswählen.</p>
+    </div>
 
-  <!-- Overlays -->
-  <div id="iconContainer">
-    <img src="Icon1.png" class="overlayIcon" data-icon="Icon1.png" alt="Overlay 1" />
-    <img src="Icon2.png" class="overlayIcon" data-icon="Icon2.png" alt="Overlay 2" />
-    <img src="Icon3.png" class="overlayIcon" data-icon="Icon3.png" alt="Overlay 3" />
-    <img src="Icon4.png" class="overlayIcon" data-icon="Icon4.png" alt="Overlay 4" />
-    <img src="Icon5.png" class="overlayIcon" data-icon="Icon5.png" alt="Overlay 5" />
-  </div>
+    <!-- Overlays -->
+    <div id="iconContainer">
+      <img src="Icon1.png" class="overlayIcon" data-icon="Icon1.png" alt="Overlay 1">
+      <img src="Icon2.png" class="overlayIcon" data-icon="Icon2.png" alt="Overlay 2">
+      <img src="Icon3.png" class="overlayIcon" data-icon="Icon3.png" alt="Overlay 3">
+      <img src="Icon4.png" class="overlayIcon" data-icon="Icon4.png" alt="Overlay 4">
+      <img src="Icon5.png" class="overlayIcon" data-icon="Icon5.png" alt="Overlay 5">
+    </div>
 
-  <!-- Verstecktes File-Input -->
-  <input type="file" id="fileInput" accept="image/*" style="display: none;" />
+    <img id="preview" src="dummy.png" alt="Bildvorschau">
+    <button id="mixButton">Mischen</button>
 
-  <!-- Canvas zum Mischen -->
-  <canvas id="canvas"></canvas>
+    <!-- Canvas versteckt -->
+    <canvas id="canvas"></canvas>
+  </main>
+
+  <footer>
+    <p>Mach dein Statement!</p>
+    <div id="mixCounter">Bisher gemischt: 0</div>
+  </footer>
+
+  <!-- Confetti Container -->
+  <div id="confetti-container"></div>
 
   <!-- Crop-Dialog -->
   <div id="cropModal">
     <div id="cropModalContent">
-      <img id="cropImage" alt="Crop Image" />
+      <img id="cropImage" alt="Crop Image">
       <div id="cropButtons">
-        <button id="confirmCropBtn">Zuschnitt bestätigen</button>
-        <button id="cancelCropBtn">Abbrechen</button>
+        <button id="confirmCropBtn" class="modalBtn">Zuschneiden</button>
+        <button id="cancelCropBtn" class="modalBtn">Abbrechen</button>
       </div>
     </div>
   </div>
 
-  <!-- DOM-Konfetti-Container -->
-  <div id="confetti-container"></div>
+  <!-- Ergebnis-Dialog -->
+  <div id="resultModal">
+    <div id="resultModalContent">
+      <img id="finalImage" src="" alt="Fertiges Bild">
+      <button id="downloadBtn">Download</button>
+    </div>
+  </div>
 
-  <!-- Cropper.js (JS) -->
+  <!-- Hidden file input -->
+  <input type="file" id="fileInput" accept="image/*" style="display: none;">
+
+  <!-- Cropper.js JS -->
   <script src="https://unpkg.com/cropperjs/dist/cropper.js"></script>
-  
   <script>
-    // --- Haupt-Elemente ---
-    const dropZone = document.getElementById('dropZone');
-    const fileInput = document.getElementById('fileInput');
-    const preview = document.getElementById('preview');
-    const processButton = document.getElementById('processButton');
-    const overlayIcons = document.querySelectorAll('.overlayIcon');
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
+    /* ---------------------------
+       Haupt-Elemente
+    ----------------------------*/
+    const dropZone      = document.getElementById('dropZone');
+    const fileInput     = document.getElementById('fileInput');
+    const preview       = document.getElementById('preview');
+    const mixButton     = document.getElementById('mixButton');
+    const overlayIcons  = document.querySelectorAll('.overlayIcon');
+    const canvas        = document.getElementById('canvas');
+    const ctx           = canvas.getContext('2d');
 
-    // --- Crop-Dialog-Elemente ---
-    const cropModal = document.getElementById('cropModal');
-    const cropImage = document.getElementById('cropImage');
-    const confirmCropBtn = document.getElementById('confirmCropBtn');
-    const cancelCropBtn = document.getElementById('cancelCropBtn');
+    // Modals & Dialogs
+    const cropModal       = document.getElementById('cropModal');
+    const cropImage       = document.getElementById('cropImage');
+    const confirmCropBtn  = document.getElementById('confirmCropBtn');
+    const cancelCropBtn   = document.getElementById('cancelCropBtn');
 
-    // --- DOM-Konfetti-Container ---
+    const resultModal         = document.getElementById('resultModal');
+    const finalImage          = document.getElementById('finalImage');
+    const downloadBtn         = document.getElementById('downloadBtn');
+
     const confettiContainer = document.getElementById('confetti-container');
 
-    let cropper = null;               
-    let uploadedImageDataURL = null;  
-    let selectedOverlaySrc = null;    
+    // Counter
+    let mixCounterValue = 0;
+    const mixCounterDiv = document.getElementById('mixCounter');
 
-    // --- Drag & Drop / Klick -> Datei auswählen ---
+    // Cropper
+    let cropper = null;
+    let uploadedImageDataURL = null;
+    let selectedOverlaySrc = null;
+
+    // Confetti Interval (so we can stop it)
+    let confettiInterval = null;
+
+
+    /* ---------------------------
+       Drag & Drop / Datei wählen
+    ----------------------------*/
     dropZone.addEventListener('dragover', (e) => {
       e.preventDefault();
       dropZone.classList.add('hover');
@@ -247,6 +379,7 @@
     dropZone.addEventListener('click', () => {
       fileInput.click();
     });
+
     fileInput.addEventListener('change', () => {
       if (fileInput.files && fileInput.files.length > 0) {
         handleFile(fileInput.files[0]);
@@ -258,11 +391,13 @@
       reader.onload = (e) => {
         cropImage.src = e.target.result;
         cropModal.style.display = 'flex';
-        // Alten Cropper zerstören, falls vorhanden
+
+        // Alten Cropper zerstören
         if (cropper) {
           cropper.destroy();
           cropper = null;
         }
+        // Cropper initiieren
         setTimeout(() => {
           cropper = new Cropper(cropImage, {
             aspectRatio: 1,
@@ -274,7 +409,9 @@
       reader.readAsDataURL(file);
     }
 
-    // --- Crop-Dialog: Bestätigen / Abbrechen ---
+    /* ---------------------------
+       Crop-Dialog: OK / Abbrechen
+    ----------------------------*/
     confirmCropBtn.addEventListener('click', () => {
       if (!cropper) return;
       const croppedCanvas = cropper.getCroppedCanvas({
@@ -283,10 +420,12 @@
       });
       uploadedImageDataURL = croppedCanvas.toDataURL('image/png');
 
+      // Modal zu
       cropModal.style.display = 'none';
       cropper.destroy();
       cropper = null;
 
+      // Vorschau
       showPreview(uploadedImageDataURL);
       fileInput.value = '';
     });
@@ -300,15 +439,17 @@
       fileInput.value = '';
     });
 
-    // --- Vorschau zeigen ---
     function showPreview(dataURL) {
       preview.src = dataURL;
       preview.style.display = 'block';
       dropZone.style.display = 'none';
-      processButton.style.display = 'inline-block';
+      mixButton.style.display = 'inline-block';
     }
 
-    // --- Overlay-Auswahl ---
+
+    /* ---------------------------
+       Overlay-Auswahl
+    ----------------------------*/
     overlayIcons.forEach(icon => {
       icon.addEventListener('click', () => {
         overlayIcons.forEach(i => i.classList.remove('selected'));
@@ -317,17 +458,20 @@
       });
     });
 
-    // --- Button: Mischen & Download ---
-    processButton.addEventListener('click', () => {
+    /* ---------------------------
+       Mischen (Canvas)
+    ----------------------------*/
+    mixButton.addEventListener('click', () => {
       if (!uploadedImageDataURL) {
-        alert('Bitte erst ein Bild hochladen & zuschneiden!');
+        alert("Bitte erst ein Bild hochladen & zuschneiden!");
         return;
       }
       if (!selectedOverlaySrc) {
-        alert('Bitte ein Overlay auswählen!');
+        alert("Bitte ein Overlay auswählen!");
         return;
       }
 
+      // BaseImage laden
       const baseImage = new Image();
       baseImage.onload = () => {
         combineImages(baseImage, selectedOverlaySrc);
@@ -338,8 +482,8 @@
     function combineImages(baseImage, overlaySrc) {
       const overlayImg = new Image();
       overlayImg.onload = () => {
-        // Canvas passt sich dem Basisbild an
-        canvas.width = baseImage.width;
+        // Canvas Größe
+        canvas.width  = baseImage.width;
         canvas.height = baseImage.height;
 
         // 1) Basisbild
@@ -347,66 +491,87 @@
         ctx.globalCompositeOperation = 'source-over';
         ctx.drawImage(baseImage, 0, 0, canvas.width, canvas.height);
 
-        // 2) Overlay mit "soft-light"
+        // 2) Overlay "soft-light"
         ctx.globalCompositeOperation = 'soft-light';
         ctx.drawImage(overlayImg, 0, 0, canvas.width, canvas.height);
 
-        // 3) Resultat als DataURL
-        const dataURL = canvas.toDataURL('image/png');
+        // DataURL
+        const finalDataURL = canvas.toDataURL('image/png');
 
-        // 4) Download
-        downloadImage(dataURL, 'FCK_AFD_Blend.png');
+        // Ergebnis-Dialog zeigen
+        finalImage.src = finalDataURL;
+        resultModal.style.display = 'flex';
 
-        // 5) DOM-Konfetti für 5s
-        triggerDomConfetti();
+        // Konfetti starten
+        startConfetti();
 
-        // 6) Reset
-        uploadedImageDataURL = null;
+        // Reset UI
         preview.style.display = 'none';
         preview.src = 'dummy.png';
         dropZone.style.display = 'flex';
-        processButton.style.display = 'none';
+        mixButton.style.display = 'none';
         overlayIcons.forEach(i => i.classList.remove('selected'));
         selectedOverlaySrc = null;
+        uploadedImageDataURL = null;
         fileInput.value = '';
       };
       overlayImg.src = overlaySrc;
     }
 
-    // --- Download-Funktion ---
-    function downloadImage(data, filename) {
+    /* ---------------------------
+       Download im Ergebnis-Dialog
+    ----------------------------*/
+    downloadBtn.addEventListener('click', () => {
+      // Download anstoßen
+      const dataURL = finalImage.src;
       const a = document.createElement('a');
-      a.href = data;
-      a.download = filename;
+      a.href = dataURL;
+      a.download = 'FCK_AFD_Blend.png';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
+
+      // Counter +1
+      mixCounterValue++;
+      mixCounterDiv.textContent = `Bisher gemischt: ${mixCounterValue}`;
+
+      // Konfetti stoppen
+      stopConfetti();
+
+      // Ergebnis-Dialog schließen
+      resultModal.style.display = 'none';
+    });
+
+    /* ---------------------------
+       DOM-Konfetti: Start/Stop
+    ----------------------------*/
+    function startConfetti() {
+      // Falls noch läuft -> erst beenden
+      stopConfetti();
+
+      // Alle 150ms ein kleines "Spawn" an Konfetti
+      confettiInterval = setInterval(() => {
+        spawnConfetti(5); 
+      }, 150);
     }
 
-    // --- DOM-Konfetti "nonstop" für 5s ---
-    function triggerDomConfetti() {
-      const duration = 5000;  // 5 Sekunden
-      const startTime = Date.now();
-      const interval = setInterval(() => {
-        const now = Date.now();
-        if (now - startTime >= duration) {
-          clearInterval(interval);
-          return;
-        }
-        // Jetzt 10× mehr: spawnConfetti(50) statt spawnConfetti(5)
-        spawnConfetti(50);
-      }, 200); // Alle 0.2 Sekunden
+    function stopConfetti() {
+      if (confettiInterval) {
+        clearInterval(confettiInterval);
+        confettiInterval = null;
+      }
     }
 
-    // --- Hilfsfunktion: Erzeugt "count" Teilchen ---
+    /* 
+       Spawn-Funktion: Erzeugt "count" Konfettis 
+       mit horizontaler Drift (CSS-Variablen).
+    */
     function spawnConfetti(count) {
-      // Farbpalette
       const colors = [
-        '#fce18a','#ff726d','#b48def','#f4306d',
-        '#85eec0','#57d1cd','#ff9f68','#ffe29f',
-        '#9fd6ff','#d9abff'
+        '#fce18a', '#ff726d', '#b48def', '#f4306d',
+        '#85eec0', '#57d1cd', '#ff9f68', '#ffe29f',
+        '#9fd6ff', '#d9abff'
       ];
-
       for (let i = 0; i < count; i++) {
         const confetti = document.createElement('div');
         confetti.classList.add('confetti');
@@ -415,19 +580,21 @@
         const randomColor = colors[Math.floor(Math.random() * colors.length)];
         confetti.style.backgroundColor = randomColor;
 
-        // Zufällige X-Position
-        const randomX = Math.random() * 100; 
-        confetti.style.left = randomX + '%';
+        // StartX: random(0%..100%)
+        const startX = Math.random() * 100; 
+        confetti.style.setProperty('--startX', startX + '%');
 
-        // Zufällige Skalierung
-        const scale = 0.5 + Math.random() * 0.75;
-        confetti.style.transform = `translateY(-10vh) scale(${scale})`;
+        // EndX: random, +-20% um Drifts zu erzeugen
+        let endX = startX + (Math.random() * 40 - 20); 
+        if (endX < 0) endX = 0;
+        if (endX > 100) endX = 100;
+        confetti.style.setProperty('--endX', endX + '%');
 
-        // Zufällige Verzögerung
-        const delay = Math.random() * 0.2;
+        // Kleine Verzögerung pro Teilchen
+        const delay = Math.random() * 0.4; 
         confetti.style.animationDelay = delay + 's';
 
-        // Ins DOM
+        // In Container einfügen
         confettiContainer.appendChild(confetti);
 
         // Entfernen nach 5s + delay
@@ -436,6 +603,7 @@
         }, (5000 + delay * 1000));
       }
     }
+
   </script>
 </body>
 </html>
