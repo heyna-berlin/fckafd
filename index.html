@@ -5,7 +5,7 @@
   <title>FCK AFD Image Blender</title>
 
   <!-- Cropper.js CSS (CDN) -->
-  <link rel="stylesheet" href="https://unpkg.com/cropperjs/dist/cropper.css">
+  <link rel="stylesheet" href="https://unpkg.com/cropperjs/dist/cropper.css" />
 
   <style>
     body {
@@ -77,7 +77,7 @@
       display: none;
     }
 
-    /* --- NEU: Container für den Crop-Dialog (einfaches Overlay) --- */
+    /* --- Container für den Crop-Dialog (Overlay) --- */
     #cropModal {
       position: fixed;
       top: 0; 
@@ -85,7 +85,7 @@
       width: 100%; 
       height: 100%;
       background-color: rgba(0,0,0,0.6);
-      display: none; /* per default unsichtbar */
+      display: none; /* Standard: unsichtbar */
       align-items: center;
       justify-content: center;
       z-index: 9999;
@@ -104,7 +104,6 @@
     #cropImage {
       max-width: 100%;
       max-height: 80vh;
-      /* Um übergroßes Bild zu verhindern */
     }
     #cropButtons {
       margin-top: 20px;
@@ -124,7 +123,6 @@
       padding: 10px 20px;
       cursor: pointer;
     }
-
   </style>
 </head>
 <body>
@@ -132,7 +130,9 @@
 
   <!-- Drag & Drop / Upload-Box -->
   <div id="dropZone">
-    <p id="dropZoneText">Lass es fallen, als ob es heiß wäre.<br />(Oder klicke hier zum Auswählen.)</p>
+    <p id="dropZoneText">
+      Lass es fallen, als ob es heiß wäre.<br />(Oder klicke hier zum Auswählen.)
+    </p>
   </div>
   <button id="processButton">Mischen &amp; Download</button>
 
@@ -154,7 +154,7 @@
   <!-- Canvas -->
   <canvas id="canvas"></canvas>
 
-  <!-- NEU: Crop-Dialog-Overlay -->
+  <!-- Crop-Dialog-Overlay -->
   <div id="cropModal">
     <div id="cropModalContent">
       <img id="cropImage" alt="Crop Image" />
@@ -165,8 +165,10 @@
     </div>
   </div>
 
-  <!-- Cropper.js JS (CDN) -->
+  <!-- Cropper.js (JS) -->
   <script src="https://unpkg.com/cropperjs/dist/cropper.js"></script>
+  <!-- canvas-confetti (JS) -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1/dist/confetti.browser.min.js"></script>
 
   <script>
     const dropZone = document.getElementById('dropZone');
@@ -184,8 +186,8 @@
     const confirmCropBtn = document.getElementById('confirmCropBtn');
     const cancelCropBtn = document.getElementById('cancelCropBtn');
 
-    let cropper = null;           // Cropper-Instanz
-    let uploadedImageDataURL = null; // Gespeichertes Ergebnis nach Crop
+    let cropper = null;               // Cropper-Instanz
+    let uploadedImageDataURL = null;  // gespeichertes Ergebnis nach Crop
     let selectedOverlaySrc = null;
 
     // ---- Drag&Drop / Klick -> Datei auswählen -----------------------------
@@ -226,12 +228,13 @@
           cropper.destroy();
           cropper = null;
         }
+
         // Neuen Cropper mit quadratischer Ratio erzeugen
         setTimeout(() => {
           cropper = new Cropper(cropImage, {
             aspectRatio: 1, // quadratisch
-            viewMode: 1,    // z.B. Restrict the crop box not to exceed the size of the canvas
-            autoCropArea: 1 // füllt den Container
+            viewMode: 1,
+            autoCropArea: 1
           });
         }, 100);
       };
@@ -241,10 +244,8 @@
     // ---- Crop-Dialog: Bestätigen / Abbrechen ------------------------------
     confirmCropBtn.addEventListener('click', () => {
       if (!cropper) return;
-
       // Ausschnitt als DataURL auslesen
       const croppedCanvas = cropper.getCroppedCanvas({
-        // Optional: Größe der Ausgabe definieren
         width: 1000,
         height: 1000
       });
@@ -272,7 +273,7 @@
       preview.src = dataURL;
       preview.style.display = 'block';
       dropZone.style.display = 'none';
-      processButton.style.display = 'inline-block'; // Mischen-Button einblenden
+      processButton.style.display = 'inline-block';
     }
 
     // ---- Overlay-Icons-Klick ---------------------------------------------
@@ -294,6 +295,7 @@
         alert('Bitte ein Overlay auswählen!');
         return;
       }
+
       // Aus dem DataURL wieder ein <img> erzeugen
       const baseImage = new Image();
       baseImage.onload = () => {
@@ -325,7 +327,10 @@
         // 4) Download anstoßen
         downloadImage(dataURL, 'FCK_AFD_Blend.png');
 
-        // 5) Reset
+        // 4b) Konfetti abfeuern
+        triggerConfetti();
+
+        // 5) Reset / Aufräumen
         uploadedImageDataURL = null;
         preview.style.display = 'none';
         preview.src = 'dummy.png';
@@ -345,6 +350,49 @@
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
+    }
+
+    // ---- Konfetti-Funktion (canvas-confetti) ------------------------------
+    function triggerConfetti() {
+      // Zahl der Partikel pro „Wave“
+      const count = 200;
+      const defaults = {
+        origin: { y: 0.7 } // Start etwas tiefer
+      };
+
+      function fire(particleRatio, opts) {
+        confetti(Object.assign({}, defaults, opts, {
+          particleCount: Math.floor(count * particleRatio)
+        }));
+      }
+
+      // Schub 1
+      fire(0.25, {
+        spread: 26,
+        startVelocity: 55,
+      });
+      // Schub 2
+      fire(0.2, {
+        spread: 60,
+      });
+      // Schub 3
+      fire(0.35, {
+        spread: 100,
+        decay: 0.91,
+        scalar: 0.8
+      });
+      // Schub 4
+      fire(0.1, {
+        spread: 120,
+        startVelocity: 25,
+        decay: 0.92,
+        scalar: 1.2
+      });
+      // Schub 5
+      fire(0.1, {
+        spread: 120,
+        startVelocity: 45,
+      });
     }
   </script>
 </body>
