@@ -18,6 +18,8 @@
     h1 {
       margin: 20px 0;
     }
+
+    /* Drag & Drop Box */
     #dropZone {
       margin: 20px auto;
       width: 300px;
@@ -38,6 +40,8 @@
       font-size: 16px;
       color: #7b3f2f;
     }
+
+    /* Mischen & Download-Button */
     #processButton {
       margin-top: 10px;
       padding: 10px 20px;
@@ -47,6 +51,8 @@
       cursor: pointer;
       display: none;
     }
+
+    /* Container für Overlay-Icons */
     #iconContainer {
       margin: 30px auto;
       display: flex;
@@ -66,6 +72,8 @@
     .overlayIcon.selected {
       border: 2px solid #b84b37;
     }
+
+    /* Vorschau */
     #preview {
       margin: 20px auto;
       width: 300px;
@@ -77,7 +85,7 @@
       display: none;
     }
 
-    /* --- Container für den Crop-Dialog (Overlay) --- */
+    /* Crop-Dialog-Overlay */
     #cropModal {
       position: fixed;
       top: 0; 
@@ -85,7 +93,7 @@
       width: 100%; 
       height: 100%;
       background-color: rgba(0,0,0,0.6);
-      display: none; /* Standard: unsichtbar */
+      display: none; /* per default unsichtbar */
       align-items: center;
       justify-content: center;
       z-index: 9999;
@@ -103,7 +111,7 @@
     }
     #cropImage {
       max-width: 100%;
-      max-height: 80vh;
+      max-height: 80vh; /* Bild nicht größer als 80% der Höhe */
     }
     #cropButtons {
       margin-top: 20px;
@@ -151,10 +159,10 @@
   <!-- Verstecktes File-Input -->
   <input type="file" id="fileInput" accept="image/*" style="display: none;" />
 
-  <!-- Canvas -->
+  <!-- Canvas (zum Mischen) -->
   <canvas id="canvas"></canvas>
 
-  <!-- Crop-Dialog-Overlay -->
+  <!-- Crop-Dialog (Overlay) -->
   <div id="cropModal">
     <div id="cropModalContent">
       <img id="cropImage" alt="Crop Image" />
@@ -165,12 +173,13 @@
     </div>
   </div>
 
-  <!-- Cropper.js (JS) -->
+  <!-- Cropper.js JS (CDN) -->
   <script src="https://unpkg.com/cropperjs/dist/cropper.js"></script>
   <!-- canvas-confetti (JS) -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1/dist/confetti.browser.min.js"></script>
 
   <script>
+    // --- Haupt-Elemente ---
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('fileInput');
     const preview = document.getElementById('preview');
@@ -179,7 +188,7 @@
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
 
-    // Crop-Dialog-Elemente
+    // --- Crop-Dialog-Elemente ---
     const cropModal = document.getElementById('cropModal');
     const cropModalContent = document.getElementById('cropModalContent');
     const cropImage = document.getElementById('cropImage');
@@ -187,10 +196,10 @@
     const cancelCropBtn = document.getElementById('cancelCropBtn');
 
     let cropper = null;               // Cropper-Instanz
-    let uploadedImageDataURL = null;  // gespeichertes Ergebnis nach Crop
+    let uploadedImageDataURL = null;  // Gespeichertes Ergebnis nach Crop
     let selectedOverlaySrc = null;
 
-    // ---- Drag&Drop / Klick -> Datei auswählen -----------------------------
+    // ---- Drag & Drop / Klick -> Datei auswählen -----------------------------
     dropZone.addEventListener('dragover', (e) => {
       e.preventDefault();
       dropZone.classList.add('hover');
@@ -214,25 +223,25 @@
       }
     });
 
-    // ---- Datei lesen und Crop-Dialog öffnen -------------------------------
+    // ---- Datei einlesen und Crop-Dialog öffnen -----------------------------
     function handleFile(file) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        // Bild in Crop-Modal laden
+        // Geladene Daten in das Bild für Cropper.js
         cropImage.src = e.target.result;
-        // Modal sichtbar machen
+        // Modal anzeigen
         cropModal.style.display = 'flex';
 
-        // Falls schon ein alter Cropper läuft -> zerstören
+        // Falls schon ein alter Cropper besteht -> zerstören
         if (cropper) {
           cropper.destroy();
           cropper = null;
         }
 
-        // Neuen Cropper mit quadratischer Ratio erzeugen
+        // Cropper erst nach kleinem Timeout instanziieren
         setTimeout(() => {
           cropper = new Cropper(cropImage, {
-            aspectRatio: 1, // quadratisch
+            aspectRatio: 1, // quadratischer Zuschnitt
             viewMode: 1,
             autoCropArea: 1
           });
@@ -241,25 +250,25 @@
       reader.readAsDataURL(file);
     }
 
-    // ---- Crop-Dialog: Bestätigen / Abbrechen ------------------------------
+    // ---- Crop-Dialog: Bestätigen / Abbrechen -------------------------------
     confirmCropBtn.addEventListener('click', () => {
       if (!cropper) return;
-      // Ausschnitt als DataURL auslesen
+
+      // Ausgeschnittenes Canvas aus dem Cropper holen
       const croppedCanvas = cropper.getCroppedCanvas({
         width: 1000,
         height: 1000
       });
       uploadedImageDataURL = croppedCanvas.toDataURL('image/png');
 
-      // Modal schließen
+      // Dialog verbergen
       cropModal.style.display = 'none';
-
-      // Anzeige updaten
+      // Vorschau zeigen
       showPreview(uploadedImageDataURL);
     });
 
     cancelCropBtn.addEventListener('click', () => {
-      // Modal schließen
+      // Dialog verbergen
       cropModal.style.display = 'none';
       // Cropper zerstören
       if (cropper) {
@@ -268,7 +277,7 @@
       }
     });
 
-    // ---- Zeige das fertig zugeschnittene Bild in preview ------------------
+    // ---- Zeige das zugeschnittene Bild in #preview -------------------------
     function showPreview(dataURL) {
       preview.src = dataURL;
       preview.style.display = 'block';
@@ -276,7 +285,7 @@
       processButton.style.display = 'inline-block';
     }
 
-    // ---- Overlay-Icons-Klick ---------------------------------------------
+    // ---- Overlay-Icon-Klick -----------------------------------------------
     overlayIcons.forEach(icon => {
       icon.addEventListener('click', () => {
         overlayIcons.forEach(i => i.classList.remove('selected'));
@@ -296,7 +305,7 @@
         return;
       }
 
-      // Aus dem DataURL wieder ein <img> erzeugen
+      // BaseImage aus DataURL erstellen
       const baseImage = new Image();
       baseImage.onload = () => {
         combineImages(baseImage, selectedOverlaySrc);
@@ -304,24 +313,24 @@
       baseImage.src = uploadedImageDataURL;
     });
 
-    // ---- Bilder kombinieren (inkl. Overlay) -------------------------------
+    // ---- Bilder kombinieren (Overlay + Base) ------------------------------
     function combineImages(baseImage, overlaySrc) {
       const overlayImg = new Image();
       overlayImg.onload = () => {
-        // Canvas-Größe an das Basisbild anpassen
+        // Canvas passend zum Basisbild
         canvas.width = baseImage.width;
         canvas.height = baseImage.height;
 
-        // 1) Basisbild normal zeichnen
+        // 1) Basisbild zeichnen
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.globalCompositeOperation = 'source-over';
         ctx.drawImage(baseImage, 0, 0, canvas.width, canvas.height);
 
-        // 2) Overlay mit "soft-light"-Modus drauf
+        // 2) Overlay mit "soft-light" drüber
         ctx.globalCompositeOperation = 'soft-light';
         ctx.drawImage(overlayImg, 0, 0, canvas.width, canvas.height);
 
-        // 3) Aus Canvas ein Data-URL erstellen
+        // 3) als Data-URL
         const dataURL = canvas.toDataURL('image/png');
 
         // 4) Download anstoßen
@@ -330,7 +339,7 @@
         // 4b) Konfetti abfeuern
         triggerConfetti();
 
-        // 5) Reset / Aufräumen
+        // 5) Reset
         uploadedImageDataURL = null;
         preview.style.display = 'none';
         preview.src = 'dummy.png';
@@ -352,12 +361,12 @@
       document.body.removeChild(a);
     }
 
-    // ---- Konfetti-Funktion (canvas-confetti) ------------------------------
+    // ---- Konfetti-Effekt --------------------------------------------------
     function triggerConfetti() {
-      // Zahl der Partikel pro „Wave“
+      // Partikel pro "Wave"
       const count = 200;
       const defaults = {
-        origin: { y: 0.7 } // Start etwas tiefer
+        origin: { y: 0.7 } // Startposition tiefer
       };
 
       function fire(particleRatio, opts) {
@@ -366,29 +375,25 @@
         }));
       }
 
-      // Schub 1
+      // Fünf Wellen für schönes Feuerwerk
       fire(0.25, {
         spread: 26,
         startVelocity: 55,
       });
-      // Schub 2
       fire(0.2, {
         spread: 60,
       });
-      // Schub 3
       fire(0.35, {
         spread: 100,
         decay: 0.91,
         scalar: 0.8
       });
-      // Schub 4
       fire(0.1, {
         spread: 120,
         startVelocity: 25,
         decay: 0.92,
         scalar: 1.2
       });
-      // Schub 5
       fire(0.1, {
         spread: 120,
         startVelocity: 45,
