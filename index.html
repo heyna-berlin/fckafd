@@ -2,83 +2,406 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <title>DOM-basiertes Konfetti (ohne Canvas)</title>
+  <title>FCK AFD Image Blender (DOM-Konfetti)</title>
+
+  <!-- Cropper.js per CDN -->
+  <link rel="stylesheet" href="https://unpkg.com/cropperjs/dist/cropper.css" />
+
   <style>
     body {
-      margin: 0; 
-      padding: 0;
       font-family: sans-serif;
+      background-color: #f8dfd5;
+      margin: 0; 
+      padding: 0; 
       text-align: center;
-      background: #f8dfd5;
     }
     h1 {
-      margin-top: 1.5em;
+      margin: 20px 0;
     }
-    button {
-      margin: 1em;
-      padding: 12px 20px;
+
+    /* Drag & Drop Box */
+    #dropZone {
+      margin: 20px auto;
+      width: 300px;
+      height: 200px;
+      background-color: #f2bca2;
+      border: 2px dashed #da8f6b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    #dropZone.hover {
+      background-color: #f7cbb7;
+    }
+    #dropZone p {
+      max-width: 80%;
+      font-size: 16px;
+      color: #7b3f2f;
+    }
+
+    /* Mischen & Download-Button */
+    #processButton {
+      margin-top: 10px;
+      padding: 10px 20px;
       background: #b84b37;
       color: #fff;
       border: none;
       cursor: pointer;
-      font-size: 16px;
+      display: none;
     }
 
-    /* Container, in den wir die Konfetti-Elemente einfügen */
+    /* Overlay-Icons */
+    #iconContainer {
+      margin: 30px auto;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      max-width: 600px;
+    }
+    .overlayIcon {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: border 0.3s;
+    }
+    .overlayIcon.selected {
+      border: 2px solid #b84b37;
+    }
+
+    /* Vorschau */
+    #preview {
+      margin: 20px auto;
+      width: 300px;
+      height: auto;
+      display: none;
+      border: 1px solid #ccc;
+    }
+    canvas {
+      display: none;
+    }
+
+    /* Crop-Dialog */
+    #cropModal {
+      position: fixed;
+      top: 0; 
+      left: 0;
+      width: 100%; 
+      height: 100%;
+      background-color: rgba(0,0,0,0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    #cropModalContent {
+      background: #fff;
+      padding: 20px;
+      border-radius: 6px;
+      position: relative;
+      max-width: 90%;
+      max-height: 90%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    #cropImage {
+      max-width: 100%;
+      max-height: 80vh;
+    }
+    #cropButtons {
+      margin-top: 20px;
+    }
+    #confirmCropBtn {
+      background-color: #b84b37;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    #cancelCropBtn {
+      background-color: #ccc;
+      color: #333;
+      border: none;
+      padding: 10px 20px;
+      cursor: pointer;
+    }
+
+    /* Testbutton fürs DOM-Konfetti */
+    #debugConfettiBtn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background: #3388cc;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+
+    /* --- DOM-Konfetti-Stile (Container & Animations) --- */
     #confetti-container {
-      position: fixed;      /* über dem ganzen Inhalt */
+      position: fixed; 
       top: 0; 
       left: 0;
       width: 100%;
       height: 100%;
-      pointer-events: none; /* Klicks gehen "durch" */
+      pointer-events: none;  /* Klicks "durchreichen" */
       overflow: hidden;
-      z-index: 9999999;     /* ganz oben */
+      z-index: 9999999;      /* ganz oben */
     }
-
-    /* Grundstil für ein Konfettiteil */
     .confetti {
       position: absolute;
       width: 8px;
       height: 16px;
-      background-color: red; /* per JS überschrieben */
+      background-color: red; /* via JS überschrieben */
       opacity: 0.9;
       top: 0;
       left: 50%;
       transform-origin: center;
       animation: fall 3s linear forwards;
     }
-
-    /* Keyframe-Animation: von oben nach unten fallen */
     @keyframes fall {
-      0% {
-        transform: translateY(-10vh) rotate(0deg);
-      }
-      100% {
-        transform: translateY(110vh) rotate(720deg);
-      }
+      0%   { transform: translateY(-10vh) rotate(0deg); }
+      100% { transform: translateY(110vh) rotate(720deg); }
     }
   </style>
 </head>
 <body>
-  <h1>DOM-basiertes Konfetti</h1>
-  <button id="domConfettiBtn">Konfetti!</button>
+  <h1>FCK AFD Image Blender (DOM-Konfetti)</h1>
 
-  <!-- Container für die Konfettiteilchen -->
+  <!-- Drag & Drop / Upload-Box -->
+  <div id="dropZone">
+    <p>Ziehe dein Bild hierher<br/>oder klicke zum Auswählen.</p>
+  </div>
+  <button id="processButton">Mischen & Download</button>
+
+  <!-- Vorschau (Dummybild) -->
+  <img id="preview" src="dummy.png" alt="Bildvorschau" />
+
+  <!-- Overlays -->
+  <div id="iconContainer">
+    <img src="Icon1.png" class="overlayIcon" data-icon="Icon1.png" alt="Overlay 1" />
+    <img src="Icon2.png" class="overlayIcon" data-icon="Icon2.png" alt="Overlay 2" />
+    <img src="Icon3.png" class="overlayIcon" data-icon="Icon3.png" alt="Overlay 3" />
+    <img src="Icon4.png" class="overlayIcon" data-icon="Icon4.png" alt="Overlay 4" />
+    <img src="Icon5.png" class="overlayIcon" data-icon="Icon5.png" alt="Overlay 5" />
+  </div>
+
+  <!-- Verstecktes File-Input -->
+  <input type="file" id="fileInput" accept="image/*" style="display: none;" />
+
+  <!-- Canvas zum Mischen -->
+  <canvas id="canvas"></canvas>
+
+  <!-- Crop-Dialog -->
+  <div id="cropModal">
+    <div id="cropModalContent">
+      <img id="cropImage" alt="Crop Image" />
+      <div id="cropButtons">
+        <button id="confirmCropBtn">Zuschnitt bestätigen</button>
+        <button id="cancelCropBtn">Abbrechen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Knopf zum Testen des DOM-Konfettis -->
+  <button id="debugConfettiBtn">Konfetti-Test!</button>
+
+  <!-- DOM-Konfetti-Container -->
   <div id="confetti-container"></div>
 
+  <!-- Cropper.js (JS) per CDN -->
+  <script src="https://unpkg.com/cropperjs/dist/cropper.js"></script>
+  
   <script>
-    const domConfettiBtn = document.getElementById('domConfettiBtn');
+    // --- Haupt-Elemente ---
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const preview = document.getElementById('preview');
+    const processButton = document.getElementById('processButton');
+    const overlayIcons = document.querySelectorAll('.overlayIcon');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    // --- Crop-Dialog-Elemente ---
+    const cropModal = document.getElementById('cropModal');
+    const cropModalContent = document.getElementById('cropModalContent');
+    const cropImage = document.getElementById('cropImage');
+    const confirmCropBtn = document.getElementById('confirmCropBtn');
+    const cancelCropBtn = document.getElementById('cancelCropBtn');
+
+    // --- DOM-Konfetti-Container ---
     const confettiContainer = document.getElementById('confetti-container');
 
-    domConfettiBtn.addEventListener('click', () => {
-      triggerDomConfetti();
+    // Testbutton für DOM-Konfetti
+    const debugConfettiBtn = document.getElementById('debugConfettiBtn');
+
+    let cropper = null;               
+    let uploadedImageDataURL = null;  
+    let selectedOverlaySrc = null;    
+
+    // --- Drag & Drop / Klick -> Datei auswählen ---
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('hover');
+    });
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('hover');
+    });
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('hover');
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        handleFile(e.dataTransfer.files[0]);
+      }
+    });
+    dropZone.addEventListener('click', () => {
+      fileInput.click();
+    });
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files && fileInput.files.length > 0) {
+        handleFile(fileInput.files[0]);
+      }
     });
 
+    function handleFile(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        cropImage.src = e.target.result;
+        cropModal.style.display = 'flex';
+        // Alten Cropper zerstören, falls vorhanden
+        if (cropper) {
+          cropper.destroy();
+          cropper = null;
+        }
+        setTimeout(() => {
+          cropper = new Cropper(cropImage, {
+            aspectRatio: 1,
+            viewMode: 1,
+            autoCropArea: 1
+          });
+        }, 100);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // --- Crop-Dialog: Bestätigen / Abbrechen ---
+    confirmCropBtn.addEventListener('click', () => {
+      if (!cropper) return;
+      const croppedCanvas = cropper.getCroppedCanvas({
+        width: 1000,
+        height: 1000
+      });
+      uploadedImageDataURL = croppedCanvas.toDataURL('image/png');
+
+      cropModal.style.display = 'none';
+      cropper.destroy();
+      cropper = null;
+
+      showPreview(uploadedImageDataURL);
+      fileInput.value = ''; // Reset, damit man das selbe Bild nochmal wählen kann
+    });
+
+    cancelCropBtn.addEventListener('click', () => {
+      cropModal.style.display = 'none';
+      if (cropper) {
+        cropper.destroy();
+        cropper = null;
+      }
+      fileInput.value = '';
+    });
+
+    // --- Vorschau zeigen ---
+    function showPreview(dataURL) {
+      preview.src = dataURL;
+      preview.style.display = 'block';
+      dropZone.style.display = 'none';
+      processButton.style.display = 'inline-block';
+    }
+
+    // --- Overlay-Auswahl ---
+    overlayIcons.forEach(icon => {
+      icon.addEventListener('click', () => {
+        overlayIcons.forEach(i => i.classList.remove('selected'));
+        icon.classList.add('selected');
+        selectedOverlaySrc = icon.dataset.icon;
+      });
+    });
+
+    // --- Button: Mischen & Download ---
+    processButton.addEventListener('click', () => {
+      if (!uploadedImageDataURL) {
+        alert('Bitte erst ein Bild hochladen & zuschneiden!');
+        return;
+      }
+      if (!selectedOverlaySrc) {
+        alert('Bitte ein Overlay auswählen!');
+        return;
+      }
+
+      const baseImage = new Image();
+      baseImage.onload = () => {
+        combineImages(baseImage, selectedOverlaySrc);
+      };
+      baseImage.src = uploadedImageDataURL;
+    });
+
+    function combineImages(baseImage, overlaySrc) {
+      const overlayImg = new Image();
+      overlayImg.onload = () => {
+        // Canvas passt sich dem Basisbild an
+        canvas.width = baseImage.width;
+        canvas.height = baseImage.height;
+
+        // 1) Basisbild
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.drawImage(baseImage, 0, 0, canvas.width, canvas.height);
+
+        // 2) Overlay mit "soft-light"
+        ctx.globalCompositeOperation = 'soft-light';
+        ctx.drawImage(overlayImg, 0, 0, canvas.width, canvas.height);
+
+        // 3) Resultat als DataURL
+        const dataURL = canvas.toDataURL('image/png');
+
+        // 4) Download
+        downloadImage(dataURL, 'FCK_AFD_Blend.png');
+
+        // 5) DOM-Konfetti abfeuern
+        triggerDomConfetti();
+
+        // 6) Reset
+        uploadedImageDataURL = null;
+        preview.style.display = 'none';
+        preview.src = 'dummy.png';
+        dropZone.style.display = 'flex';
+        processButton.style.display = 'none';
+        overlayIcons.forEach(i => i.classList.remove('selected'));
+        selectedOverlaySrc = null;
+        fileInput.value = '';
+      };
+      overlayImg.src = overlaySrc;
+    }
+
+    // --- Download-Funktion ---
+    function downloadImage(data, filename) {
+      const a = document.createElement('a');
+      a.href = data;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    // --- DOM-Konfetti-Funktion (CSS-based) ---
     function triggerDomConfetti() {
-      // Anzahl Konfettiteilchen
-      const count = 50;
-      // Farbpalette
+      const count = 50;  // Anzahl Konfettiteilchen
+      // Farbpalette (beliebig erweiterbar)
       const colors = [
         '#fce18a','#ff726d','#b48def','#f4306d',
         '#85eec0','#57d1cd','#ff9f68','#ffe29f',
@@ -86,7 +409,6 @@
       ];
 
       for (let i = 0; i < count; i++) {
-        // Neues div für ein Konfetti-Teil
         const confetti = document.createElement('div');
         confetti.classList.add('confetti');
 
@@ -94,27 +416,32 @@
         const randomColor = colors[Math.floor(Math.random() * colors.length)];
         confetti.style.backgroundColor = randomColor;
 
-        // Zufällige x-Position (0% bis 100%)
+        // Zufällige X-Position
         const randomX = Math.random() * 100; 
         confetti.style.left = randomX + '%';
 
-        // Zufällige Größe / Skalierung
-        const scale = 0.5 + Math.random() * 0.75; // z.B. 0.5 - 1.25
+        // Zufällige Skalierung
+        const scale = 0.5 + Math.random() * 0.75;
         confetti.style.transform = `translateY(-10vh) scale(${scale})`;
 
-        // Zufällige Verzögerung, damit nicht alle sofort fallen
-        const delay = Math.random() * 0.2; // max 0.2s
+        // Zufällige Verzögerung
+        const delay = Math.random() * 0.2;
         confetti.style.animationDelay = delay + 's';
 
-        // Ins DOM einfügen
+        // Ins DOM
         confettiContainer.appendChild(confetti);
 
-        // Entfernen nach Ende der Animation (3s + delay)
+        // Entfernen nach Animation (3s + delay)
         setTimeout(() => {
           confetti.remove();
         }, (3 + delay) * 1000);
       }
     }
+
+    // --- Testbutton fürs DOM-Konfetti ---
+    debugConfettiBtn.addEventListener('click', () => {
+      triggerDomConfetti();
+    });
   </script>
 </body>
 </html>
