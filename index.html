@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <title>FCK AFD Image Blender (DOM-Konfetti, 3s nonstop)</title>
+  <title>FCK AFD Image Blender (DOM-Konfetti, 5s 10x mehr)</title>
 
   <!-- Cropper.js per CDN -->
   <link rel="stylesheet" href="https://unpkg.com/cropperjs/dist/cropper.css" />
@@ -152,8 +152,10 @@
       top: 0;
       left: 50%;
       transform-origin: center;
-      animation: fall 3s linear forwards;
+      /* Animation jetzt 5s statt 3s */
+      animation: fall 5s linear forwards;
     }
+    /* Keyframes auf 5s angepasst */
     @keyframes fall {
       0%   { transform: translateY(-10vh) rotate(0deg); }
       100% { transform: translateY(110vh) rotate(720deg); }
@@ -161,7 +163,7 @@
   </style>
 </head>
 <body>
-  <h1>FCK AFD Image Blender (DOM-Konfetti, 3s nonstop)</h1>
+  <h1>FCK AFD Image Blender (DOM-Konfetti, 5s & 10× mehr)</h1>
 
   <!-- Drag & Drop / Upload-Box -->
   <div id="dropZone">
@@ -355,7 +357,7 @@
         // 4) Download
         downloadImage(dataURL, 'FCK_AFD_Blend.png');
 
-        // 5) DOM-Konfetti für 3s
+        // 5) DOM-Konfetti für 5s
         triggerDomConfetti();
 
         // 6) Reset
@@ -381,21 +383,19 @@
       document.body.removeChild(a);
     }
 
-    // --- DOM-Konfetti "nonstop" für 3s ---
+    // --- DOM-Konfetti "nonstop" für 5s ---
     function triggerDomConfetti() {
-      // Wir starten ein Intervall, das alle 200ms neue Teilchen erzeugt,
-      // und stoppen nach 3 Sekunden.
+      const duration = 5000;  // 5 Sekunden
       const startTime = Date.now();
-      const duration = 3000; // 3 Sekunden
       const interval = setInterval(() => {
         const now = Date.now();
         if (now - startTime >= duration) {
           clearInterval(interval);
           return;
         }
-        // Pro Intervall 5 Teilchen erzeugen
-        spawnConfetti(5);
-      }, 200);
+        // Jetzt 10× mehr: spawnConfetti(50) statt spawnConfetti(5)
+        spawnConfetti(50);
+      }, 200); // Alle 0.2 Sekunden
     }
 
     // --- Hilfsfunktion: Erzeugt "count" Teilchen ---
@@ -430,10 +430,10 @@
         // Ins DOM
         confettiContainer.appendChild(confetti);
 
-        // Entfernen nach (3s Anim + delay)
+        // Entfernen nach 5s + delay
         setTimeout(() => {
           confetti.remove();
-        }, (3000 + delay * 1000));
+        }, (5000 + delay * 1000));
       }
     }
   </script>
