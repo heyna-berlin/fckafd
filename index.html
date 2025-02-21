@@ -2,9 +2,9 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <title>FCK AFD Image Blender</title>
+  <title>FCK AFD Image Blender (Komplettskript)</title>
 
-  <!-- Cropper.js CSS (CDN) -->
+  <!-- Cropper.js per CDN -->
   <link rel="stylesheet" href="https://unpkg.com/cropperjs/dist/cropper.css" />
 
   <style>
@@ -41,7 +41,7 @@
       color: #7b3f2f;
     }
 
-    /* Mischen & Download-Button */
+    /* "Mischen & Download"-Button */
     #processButton {
       margin-top: 10px;
       padding: 10px 20px;
@@ -52,7 +52,7 @@
       display: none;
     }
 
-    /* Container für Overlay-Icons */
+    /* Overlay-Icon-Container */
     #iconContainer {
       margin: 30px auto;
       display: flex;
@@ -73,7 +73,7 @@
       border: 2px solid #b84b37;
     }
 
-    /* Vorschau */
+    /* Vorschau (Dummy) */
     #preview {
       margin: 20px auto;
       width: 300px;
@@ -85,7 +85,7 @@
       display: none;
     }
 
-    /* Crop-Dialog-Overlay */
+    /* Crop-Dialog (Fullscreen-Overlay) */
     #cropModal {
       position: fixed;
       top: 0; 
@@ -93,7 +93,7 @@
       width: 100%; 
       height: 100%;
       background-color: rgba(0,0,0,0.6);
-      display: none; /* unsichtbar bis benötigt */
+      display: none; /* unsichtbar, bis benötigt */
       align-items: center;
       justify-content: center;
       z-index: 9999;
@@ -111,7 +111,7 @@
     }
     #cropImage {
       max-width: 100%;
-      max-height: 80vh; /* Bild nicht größer als 80% der Browserhöhe */
+      max-height: 80vh; /* Verhindert "übergroßes" Bild */
     }
     #cropButtons {
       margin-top: 20px;
@@ -131,16 +131,24 @@
       padding: 10px 20px;
       cursor: pointer;
     }
+
+    /* Test-Button für manuelles Konfetti */
+    #debugConfettiBtn {
+      margin: 20px auto;
+      padding: 8px 16px;
+      background: #3388cc;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
-  <h1>FCK AFD Image Blender</h1>
+  <h1>FCK AFD Image Blender (Komplettskript)</h1>
 
   <!-- Drag & Drop / Upload-Box -->
   <div id="dropZone">
-    <p id="dropZoneText">
-      Lass es fallen, als ob es heiß wäre.<br />(Oder klicke hier zum Auswählen.)
-    </p>
+    <p>Ziehe dein Bild hierher<br/>oder klicke zum Auswählen.</p>
   </div>
   <button id="processButton">Mischen &amp; Download</button>
 
@@ -173,12 +181,16 @@
     </div>
   </div>
 
-  <!-- Cropper.js & Confetti per CDN -->
+  <!-- Debug-Knopf (manuelles Konfetti) -->
+  <button id="debugConfettiBtn">Manueller Konfetti-Test!</button>
+
+  <!-- Cropper.js (JS) -->
   <script src="https://unpkg.com/cropperjs/dist/cropper.js"></script>
+  <!-- canvas-confetti (JS) -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1/dist/confetti.browser.min.js"></script>
 
   <script>
-    // --- Haupt-Elemente ---
+    // ------- Haupt-Elemente -------
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('fileInput');
     const preview = document.getElementById('preview');
@@ -187,26 +199,22 @@
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
 
-    // --- Crop-Dialog-Elemente ---
+    // ------- Crop-Dialog-Elemente -------
     const cropModal = document.getElementById('cropModal');
     const cropModalContent = document.getElementById('cropModalContent');
     const cropImage = document.getElementById('cropImage');
     const confirmCropBtn = document.getElementById('confirmCropBtn');
     const cancelCropBtn = document.getElementById('cancelCropBtn');
 
-    let cropper = null;               // Cropper-Instanz
-    let uploadedImageDataURL = null;  // Ergebnis nach Crop
-    let selectedOverlaySrc = null;
+    // Debug-Knopf für manuellen Konfetti-Test
+    const debugConfettiBtn = document.getElementById('debugConfettiBtn');
 
-    // Sicherheitshalber checken, ob confetti & Cropper verfügbar
-    if (typeof confetti !== 'function') {
-      console.warn("canvas-confetti nicht verfügbar. Kein Konfetti-Effekt möglich.");
-    }
-    if (typeof Cropper !== 'function') {
-      console.warn("Cropper.js nicht verfügbar. Zuschneiden nicht möglich.");
-    }
+    // Variablen
+    let cropper = null;              // Instanz von Cropper
+    let uploadedImageDataURL = null; // Daten des zugeschnittenen Bildes
+    let selectedOverlaySrc = null;   // Pfad des gewählten Overlays
 
-    // ---- Drag & Drop / Klick -> Datei auswählen -----------------------------
+    // ------- Drag & Drop / Klick -> Datei auswählen -------
     dropZone.addEventListener('dragover', (e) => {
       e.preventDefault();
       dropZone.classList.add('hover');
@@ -218,123 +226,98 @@
       e.preventDefault();
       dropZone.classList.remove('hover');
       if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-        console.log("Datei gedroppt:", e.dataTransfer.files[0].name);
         handleFile(e.dataTransfer.files[0]);
       }
     });
     dropZone.addEventListener('click', () => {
-      console.log("dropZone clicked -> fileInput.click()");
       fileInput.click();
     });
     fileInput.addEventListener('change', () => {
       if (fileInput.files && fileInput.files.length > 0) {
-        console.log("File selected:", fileInput.files[0].name);
         handleFile(fileInput.files[0]);
       }
     });
 
-    // ---- Datei einlesen und Crop-Dialog öffnen -----------------------------
+    // ------- Datei laden und Crop-Dialog öffnen -------
     function handleFile(file) {
-      console.log("handleFile() called with file:", file.name);
       const reader = new FileReader();
       reader.onload = (e) => {
-        console.log("FileReader fertig, Bild wird in Cropper geladen.");
-        // Geladene Daten in das Image für Cropper.js
         cropImage.src = e.target.result;
-
-        // Modal anzeigen
+        // Modal einblenden
         cropModal.style.display = 'flex';
 
-        // Vorherigen Cropper zerstören (falls vorhanden)
+        // Alte Cropper-Instanz zerstören
         if (cropper) {
           cropper.destroy();
           cropper = null;
         }
         // Cropper initialisieren
         setTimeout(() => {
-          if (typeof Cropper === 'function') {
-            cropper = new Cropper(cropImage, {
-              aspectRatio: 1, // quadratisch
-              viewMode: 1,
-              autoCropArea: 1
-            });
-            console.log("Cropper init");
-          } else {
-            alert("Cropper.js nicht geladen! Kein Zuschneiden möglich.");
-          }
+          cropper = new Cropper(cropImage, {
+            aspectRatio: 1, // quadratisch
+            viewMode: 1,
+            autoCropArea: 1
+          });
         }, 100);
-      };
-      reader.onerror = (err) => {
-        console.error("FileReader Fehler:", err);
       };
       reader.readAsDataURL(file);
     }
 
-    // ---- Crop-Dialog: Bestätigen / Abbrechen -------------------------------
+    // ------- Crop-Dialog: Bestätigen & Abbrechen -------
     confirmCropBtn.addEventListener('click', () => {
-      console.log("confirmCropBtn clicked");
-      if (!cropper) {
-        console.warn("Kein Cropper vorhanden!");
-        return;
-      }
-      // Canvas aus Cropper holen
+      if (!cropper) return;
+      // Ausschnitt als Canvas holen
       const croppedCanvas = cropper.getCroppedCanvas({
         width: 1000,
         height: 1000
       });
+      // DataURL speichern
       uploadedImageDataURL = croppedCanvas.toDataURL('image/png');
 
-      // Modal verbergen
+      // Dialog ausblenden
       cropModal.style.display = 'none';
-      if (cropper) {
-        cropper.destroy();
-        cropper = null;
-      }
+      cropper.destroy();
+      cropper = null;
 
-      // Vorschau zeigen
+      // Vorschau anzeigen
       showPreview(uploadedImageDataURL);
 
-      // File-Input resetten, damit man ggf. dasselbe Bild nochmal wählen kann
+      // File-Input resetten, damit dieselbe Datei noch mal gewählt werden kann
       fileInput.value = '';
     });
 
     cancelCropBtn.addEventListener('click', () => {
-      console.log("cancelCropBtn clicked, Abbruch.");
-      // Modal verbergen
+      // Dialog ausblenden
       cropModal.style.display = 'none';
-      // Cropper zerstören
+      // Cropper-Instanz weg
       if (cropper) {
         cropper.destroy();
         cropper = null;
       }
-      // Ebenfalls File-Input zurücksetzen
       fileInput.value = '';
     });
 
-    // ---- Zeige das zugeschnittene Bild in #preview -------------------------
+    // ------- Geschnittenes Bild in #preview anzeigen -------
     function showPreview(dataURL) {
-      console.log("showPreview() -> Vorschau wird angezeigt");
       preview.src = dataURL;
       preview.style.display = 'block';
       dropZone.style.display = 'none';
       processButton.style.display = 'inline-block';
     }
 
-    // ---- Overlay-Icon-Klick -----------------------------------------------
+    // ------- Overlay auswählen -------
     overlayIcons.forEach(icon => {
       icon.addEventListener('click', () => {
         overlayIcons.forEach(i => i.classList.remove('selected'));
         icon.classList.add('selected');
         selectedOverlaySrc = icon.dataset.icon;
-        console.log("Overlay gewählt:", selectedOverlaySrc);
       });
     });
 
-    // ---- Button: Mischen & Download ---------------------------------------
+    // ------- Button: Mischen & Download -------
     processButton.addEventListener('click', () => {
-      console.log("Mischen & Download geklickt");
       if (!uploadedImageDataURL) {
-        alert('Bitte erst ein Bild hochladen und zuschneiden!');
+        alert('Bitte erst ein Bild hochladen & zuschneiden!');
         return;
       }
       if (!selectedOverlaySrc) {
@@ -342,50 +325,45 @@
         return;
       }
 
-      // baseImage erstellen
+      // Das zugeschnittene Bild laden
       const baseImage = new Image();
       baseImage.onload = () => {
-        console.log("baseImage onload -> combineImages");
         combineImages(baseImage, selectedOverlaySrc);
-      };
-      baseImage.onerror = (err) => {
-        console.error("baseImage load error:", err);
       };
       baseImage.src = uploadedImageDataURL;
     });
 
-    // ---- Bilder kombinieren (Overlay + Base) ------------------------------
+    // ------- Bilder kombinieren (Base + Overlay) -------
     function combineImages(baseImage, overlaySrc) {
-      console.log("combineImages -> overlaySrc =", overlaySrc);
       const overlayImg = new Image();
       overlayImg.onload = () => {
-        console.log("overlayImg loaded, Canvas wird beschrieben");
-        // Canvas passend zum Basisbild
+        // Canvas in Größe des Basisbilds
         canvas.width = baseImage.width;
         canvas.height = baseImage.height;
 
-        // 1) Basisbild zeichnen
+        // 1) Basisbild normal malen
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.globalCompositeOperation = 'source-over';
         ctx.drawImage(baseImage, 0, 0, canvas.width, canvas.height);
 
-        // 2) Overlay mit "soft-light" drüber
+        // 2) Overlay mit "soft-light"
         ctx.globalCompositeOperation = 'soft-light';
         ctx.drawImage(overlayImg, 0, 0, canvas.width, canvas.height);
 
-        // 3) als Data-URL
+        // 3) Ausgabe als Data-URL
         const dataURL = canvas.toDataURL('image/png');
 
-        // 4) Download anstoßen
-        console.log("Download wird gestartet");
+        // 4) Download
         downloadImage(dataURL, 'FCK_AFD_Blend.png');
 
-        // 4b) Konfetti abfeuern (wenn confetti vorhanden)
+        // 4b) Konfetti
         if (typeof confetti === 'function') {
           triggerConfetti();
+        } else {
+          console.warn("Konfetti-Skript nicht geladen.");
         }
 
-        // 5) Reset / Aufräumen
+        // 5) Reset
         uploadedImageDataURL = null;
         preview.style.display = 'none';
         preview.src = 'dummy.png';
@@ -395,13 +373,10 @@
         selectedOverlaySrc = null;
         fileInput.value = '';
       };
-      overlayImg.onerror = (err) => {
-        console.error("overlayImg load error:", err);
-      };
       overlayImg.src = overlaySrc;
     }
 
-    // ---- Helper: Download-Funktion ----------------------------------------
+    // ------- Download-Helfer -------
     function downloadImage(data, filename) {
       const a = document.createElement('a');
       a.href = data;
@@ -409,27 +384,45 @@
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      console.log("Download ausgeführt:", filename);
     }
 
-    // ---- Konfetti-Effekt (canvas-confetti) --------------------------------
+    // ------- Konfetti-Funktion -------
     function triggerConfetti() {
-      console.log("Konfetti startet!");
+      // Anzahl Partikel pro "Wave"
       const count = 200;
       const defaults = {
-        origin: { y: 0.7 }
+        origin: { y: 0.7 },
+        // Optional, falls du extreme Layouts hast
+        // zIndex: 9999999
       };
+
       function fire(particleRatio, opts) {
         confetti(Object.assign({}, defaults, opts, {
           particleCount: Math.floor(count * particleRatio)
         }));
       }
+
+      // In 5 "Wellen" Konfetti abfeuern
       fire(0.25, { spread: 26, startVelocity: 55 });
       fire(0.2, { spread: 60 });
       fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
       fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
       fire(0.1, { spread: 120, startVelocity: 45 });
     }
+
+    // ------- Manueller Knopf für Konfetti-Test -------
+    debugConfettiBtn.addEventListener('click', () => {
+      if (typeof confetti === 'function') {
+        confetti({
+          particleCount: 150,
+          spread: 100,
+          origin: { x: 0.5, y: 0.5 },
+          zIndex: 999999
+        });
+      } else {
+        alert("Konfetti-Skript nicht geladen oder blockiert!");
+      }
+    });
   </script>
 </body>
 </html>
