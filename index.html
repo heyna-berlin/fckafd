@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>FCK AFD Bildmischer ;)</title>
 
   <!-- Cropper.js (CDN) -->
@@ -9,25 +9,32 @@
 
   <style>
     /* --- Grundlayout --- */
+    * {
+      box-sizing: border-box;
+    }
     body {
       margin: 0; 
       padding: 0;
       font-family: sans-serif;
       background-color: #f8dfd5;
-      text-align: center;
-      color: #333;
-      min-height: 100vh;
       display: flex;
       flex-direction: column;
+      min-height: 100vh;
+      color: #333;
     }
+    /* Kopfzeile als Balken */
     header {
+      background: #f2bca2;
+      color: #7b3f2f;
       padding: 15px;
+      text-align: center;
     }
-    h1 {
+    header h1 {
       margin: 0;
       font-size: 1.6rem;
       color: #b84b37;
     }
+
     main {
       flex: 1; /* füllt den mittleren Bereich */
       display: flex;
@@ -41,6 +48,7 @@
       padding: 10px;
       color: #7b3f2f;
       font-size: 0.9rem;
+      text-align: center;
     }
     #mixCounter {
       position: absolute;
@@ -178,7 +186,7 @@
       background-color: #bbb;
     }
 
-    /* --- Ergebnis-Dialog (mit weißem Rahmen) --- */
+    /* --- Ergebnis-Dialog (weißes Rechteck) --- */
     #resultModal {
       position: fixed;
       top: 0; left: 0;
@@ -194,9 +202,7 @@
       border-radius: 6px;
       max-width: 500px;
       position: relative;
-      /* Der Rahmen ist einfach viel Padding */
-      padding: 20px 20px 60px 20px; 
-      /* extra großer unterer Bereich */
+      padding: 20px 20px 60px 20px; /* unten extra Rand */
     }
     #finalImage {
       display: block;
@@ -238,8 +244,6 @@
       height: 16px;
       background-color: red; /* via JS überschrieben */
       opacity: 0.9;
-      /* Falls du Ecken abrunden willst:
-         border-radius: 4px; */
       top: 0;
       left: 50%;
       transform-origin: center;
@@ -264,10 +268,12 @@
 </head>
 <body>
 
+  <!-- Kopfzeile mit Balken -->
   <header>
     <h1>FCK AFD Bildmischer ;)</h1>
   </header>
 
+  <!-- Hauptbereich -->
   <main>
     <!-- Drag & Drop / Upload -->
     <div id="dropZone">
@@ -290,6 +296,7 @@
     <canvas id="canvas"></canvas>
   </main>
 
+  <!-- Fußzeile mit localStorage-Counter -->
   <footer>
     <p>Mach dein Statement!</p>
     <div id="mixCounter">Bisher gemischt: 0</div>
@@ -340,24 +347,38 @@
     const confirmCropBtn  = document.getElementById('confirmCropBtn');
     const cancelCropBtn   = document.getElementById('cancelCropBtn');
 
-    const resultModal         = document.getElementById('resultModal');
-    const finalImage          = document.getElementById('finalImage');
-    const downloadBtn         = document.getElementById('downloadBtn');
+    const resultModal     = document.getElementById('resultModal');
+    const finalImage      = document.getElementById('finalImage');
+    const downloadBtn     = document.getElementById('downloadBtn');
 
-    const confettiContainer = document.getElementById('confetti-container');
-
-    // Counter
+    // Counter (lokale Persistenz via localStorage)
     let mixCounterValue = 0;
     const mixCounterDiv = document.getElementById('mixCounter');
+
+    // Konfetti
+    const confettiContainer = document.getElementById('confetti-container');
+    let confettiInterval = null;
 
     // Cropper
     let cropper = null;
     let uploadedImageDataURL = null;
     let selectedOverlaySrc = null;
 
-    // Confetti Interval (so we can stop it)
-    let confettiInterval = null;
 
+    /* ---------------------------
+       Bei Laden: localStorage lesen
+    ----------------------------*/
+    document.addEventListener('DOMContentLoaded', () => {
+      const storedCount = localStorage.getItem('mixCounterValue');
+      if (storedCount !== null) {
+        mixCounterValue = parseInt(storedCount, 10) || 0;
+      }
+      updateCounterUI();
+    });
+
+    function updateCounterUI() {
+      mixCounterDiv.textContent = `Bisher gemischt: ${mixCounterValue}`;
+    }
 
     /* ---------------------------
        Drag & Drop / Datei wählen
@@ -531,9 +552,10 @@
       a.click();
       document.body.removeChild(a);
 
-      // Counter +1
+      // Counter +1 & in localStorage speichern
       mixCounterValue++;
-      mixCounterDiv.textContent = `Bisher gemischt: ${mixCounterValue}`;
+      localStorage.setItem('mixCounterValue', mixCounterValue);
+      updateCounterUI();
 
       // Konfetti stoppen
       stopConfetti();
@@ -549,10 +571,10 @@
       // Falls noch läuft -> erst beenden
       stopConfetti();
 
-      // Alle 150ms ein kleines "Spawn" an Konfetti
+      // Alle 200ms ein "Spawn" an Konfetti
       confettiInterval = setInterval(() => {
         spawnConfetti(5); 
-      }, 150);
+      }, 200);
     }
 
     function stopConfetti() {
@@ -584,20 +606,20 @@
         const startX = Math.random() * 100; 
         confetti.style.setProperty('--startX', startX + '%');
 
-        // EndX: random, +-20% um Drifts zu erzeugen
+        // EndX: random, +-20% Drift
         let endX = startX + (Math.random() * 40 - 20); 
-        if (endX < 0) endX = 0;
+        if (endX < 0)   endX = 0;
         if (endX > 100) endX = 100;
         confetti.style.setProperty('--endX', endX + '%');
 
-        // Kleine Verzögerung pro Teilchen
+        // Kleine Verzögerung
         const delay = Math.random() * 0.4; 
         confetti.style.animationDelay = delay + 's';
 
         // In Container einfügen
         confettiContainer.appendChild(confetti);
 
-        // Entfernen nach 5s + delay
+        // Entfernen nach 5s + Delay
         setTimeout(() => {
           confetti.remove();
         }, (5000 + delay * 1000));
