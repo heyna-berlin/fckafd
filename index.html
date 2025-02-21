@@ -3,6 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <title>FCK AFD Image Blender</title>
+
+  <!-- Cropper.js CSS (CDN) -->
+  <link rel="stylesheet" href="https://unpkg.com/cropperjs/dist/cropper.css">
+
   <style>
     body {
       font-family: sans-serif;
@@ -72,6 +76,55 @@
     canvas {
       display: none;
     }
+
+    /* --- NEU: Container für den Crop-Dialog (einfaches Overlay) --- */
+    #cropModal {
+      position: fixed;
+      top: 0; 
+      left: 0;
+      width: 100%; 
+      height: 100%;
+      background-color: rgba(0,0,0,0.6);
+      display: none; /* per default unsichtbar */
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    #cropModalContent {
+      background: #fff;
+      padding: 20px;
+      border-radius: 6px;
+      position: relative;
+      max-width: 90%;
+      max-height: 90%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    #cropImage {
+      max-width: 100%;
+      max-height: 80vh;
+      /* Um übergroßes Bild zu verhindern */
+    }
+    #cropButtons {
+      margin-top: 20px;
+    }
+    #confirmCropBtn {
+      background-color: #b84b37;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    #cancelCropBtn {
+      background-color: #ccc;
+      color: #333;
+      border: none;
+      padding: 10px 20px;
+      cursor: pointer;
+    }
+
   </style>
 </head>
 <body>
@@ -101,9 +154,22 @@
   <!-- Canvas -->
   <canvas id="canvas"></canvas>
 
+  <!-- NEU: Crop-Dialog-Overlay -->
+  <div id="cropModal">
+    <div id="cropModalContent">
+      <img id="cropImage" alt="Crop Image" />
+      <div id="cropButtons">
+        <button id="confirmCropBtn">Zuschnitt bestätigen</button>
+        <button id="cancelCropBtn">Abbrechen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cropper.js JS (CDN) -->
+  <script src="https://unpkg.com/cropperjs/dist/cropper.js"></script>
+
   <script>
     const dropZone = document.getElementById('dropZone');
-    const dropZoneText = document.getElementById('dropZoneText');
     const fileInput = document.getElementById('fileInput');
     const preview = document.getElementById('preview');
     const processButton = document.getElementById('processButton');
@@ -111,19 +177,25 @@
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
 
-    let uploadedImage = null;
+    // Crop-Dialog-Elemente
+    const cropModal = document.getElementById('cropModal');
+    const cropModalContent = document.getElementById('cropModalContent');
+    const cropImage = document.getElementById('cropImage');
+    const confirmCropBtn = document.getElementById('confirmCropBtn');
+    const cancelCropBtn = document.getElementById('cancelCropBtn');
+
+    let cropper = null;           // Cropper-Instanz
+    let uploadedImageDataURL = null; // Gespeichertes Ergebnis nach Crop
     let selectedOverlaySrc = null;
 
-    // -- Drag & Drop Event-Listener -------------------------------------------
+    // ---- Drag&Drop / Klick -> Datei auswählen -----------------------------
     dropZone.addEventListener('dragover', (e) => {
       e.preventDefault();
       dropZone.classList.add('hover');
     });
-
     dropZone.addEventListener('dragleave', () => {
       dropZone.classList.remove('hover');
     });
-
     dropZone.addEventListener('drop', (e) => {
       e.preventDefault();
       dropZone.classList.remove('hover');
@@ -131,60 +203,106 @@
         handleFile(e.dataTransfer.files[0]);
       }
     });
-
-    // Klick auf Dropzone öffnet FileDialog
     dropZone.addEventListener('click', () => {
       fileInput.click();
     });
-
     fileInput.addEventListener('change', () => {
       if (fileInput.files && fileInput.files.length > 0) {
         handleFile(fileInput.files[0]);
       }
     });
 
-    // -- Datei verarbeiten und Bild laden -------------------------------------
+    // ---- Datei lesen und Crop-Dialog öffnen -------------------------------
     function handleFile(file) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        uploadedImage = new Image();
-        uploadedImage.onload = () => {
-          preview.src = e.target.result;
-          preview.style.display = 'block';
-          dropZone.style.display = 'none';
-          processButton.style.display = 'inline-block'; // Button anzeigen
-        };
-        uploadedImage.src = e.target.result;
+        // Bild in Crop-Modal laden
+        cropImage.src = e.target.result;
+        // Modal sichtbar machen
+        cropModal.style.display = 'flex';
+
+        // Falls schon ein alter Cropper läuft -> zerstören
+        if (cropper) {
+          cropper.destroy();
+          cropper = null;
+        }
+        // Neuen Cropper mit quadratischer Ratio erzeugen
+        setTimeout(() => {
+          cropper = new Cropper(cropImage, {
+            aspectRatio: 1, // quadratisch
+            viewMode: 1,    // z.B. Restrict the crop box not to exceed the size of the canvas
+            autoCropArea: 1 // füllt den Container
+          });
+        }, 100);
       };
       reader.readAsDataURL(file);
     }
 
-    // -- Overlay-Icons-Klick verarbeiten -------------------------------------
+    // ---- Crop-Dialog: Bestätigen / Abbrechen ------------------------------
+    confirmCropBtn.addEventListener('click', () => {
+      if (!cropper) return;
+
+      // Ausschnitt als DataURL auslesen
+      const croppedCanvas = cropper.getCroppedCanvas({
+        // Optional: Größe der Ausgabe definieren
+        width: 1000,
+        height: 1000
+      });
+      uploadedImageDataURL = croppedCanvas.toDataURL('image/png');
+
+      // Modal schließen
+      cropModal.style.display = 'none';
+
+      // Anzeige updaten
+      showPreview(uploadedImageDataURL);
+    });
+
+    cancelCropBtn.addEventListener('click', () => {
+      // Modal schließen
+      cropModal.style.display = 'none';
+      // Cropper zerstören
+      if (cropper) {
+        cropper.destroy();
+        cropper = null;
+      }
+    });
+
+    // ---- Zeige das fertig zugeschnittene Bild in preview ------------------
+    function showPreview(dataURL) {
+      preview.src = dataURL;
+      preview.style.display = 'block';
+      dropZone.style.display = 'none';
+      processButton.style.display = 'inline-block'; // Mischen-Button einblenden
+    }
+
+    // ---- Overlay-Icons-Klick ---------------------------------------------
     overlayIcons.forEach(icon => {
       icon.addEventListener('click', () => {
-        // Zuvor ausgewählte markieren entfernen
         overlayIcons.forEach(i => i.classList.remove('selected'));
         icon.classList.add('selected');
-
         selectedOverlaySrc = icon.dataset.icon;
       });
     });
 
-    // -- Button: Mischen & Download -------------------------------------------
+    // ---- Button: Mischen & Download ---------------------------------------
     processButton.addEventListener('click', () => {
-      if (!uploadedImage) {
-        alert('Bitte erst ein Bild hochladen!');
+      if (!uploadedImageDataURL) {
+        alert('Bitte erst ein Bild hochladen und zuschneiden!');
         return;
       }
       if (!selectedOverlaySrc) {
         alert('Bitte ein Overlay auswählen!');
         return;
       }
-      // Mischen
-      combineImages(uploadedImage, selectedOverlaySrc);
+      // Aus dem DataURL wieder ein <img> erzeugen
+      const baseImage = new Image();
+      baseImage.onload = () => {
+        combineImages(baseImage, selectedOverlaySrc);
+      };
+      baseImage.src = uploadedImageDataURL;
     });
 
-    // -- Bilder kombinieren ---------------------------------------------------
+    // ---- Bilder kombinieren (inkl. Overlay) -------------------------------
     function combineImages(baseImage, overlaySrc) {
       const overlayImg = new Image();
       overlayImg.onload = () => {
@@ -201,15 +319,14 @@
         ctx.globalCompositeOperation = 'soft-light';
         ctx.drawImage(overlayImg, 0, 0, canvas.width, canvas.height);
 
-        // 3) aus Canvas ein Data-URL erstellen
+        // 3) Aus Canvas ein Data-URL erstellen
         const dataURL = canvas.toDataURL('image/png');
 
         // 4) Download anstoßen
         downloadImage(dataURL, 'FCK_AFD_Blend.png');
 
-        // 5) Ggf. hochgeladenes Bild "vergessen"
-        // (im reinen Frontend kann man nur versuchen, die Variable zu leeren)
-        uploadedImage = null;
+        // 5) Reset
+        uploadedImageDataURL = null;
         preview.style.display = 'none';
         preview.src = 'dummy.png';
         dropZone.style.display = 'flex';
@@ -220,7 +337,7 @@
       overlayImg.src = overlaySrc;
     }
 
-    // -- Helper: Download-Funktion -------------------------------------------
+    // ---- Helper: Download-Funktion ----------------------------------------
     function downloadImage(data, filename) {
       const a = document.createElement('a');
       a.href = data;
