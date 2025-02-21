@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <title>FCK AFD Image Blender (DOM-Konfetti)</title>
+  <title>FCK AFD Image Blender (DOM-Konfetti, 3s nonstop)</title>
 
   <!-- Cropper.js per CDN -->
   <link rel="stylesheet" href="https://unpkg.com/cropperjs/dist/cropper.css" />
@@ -132,17 +132,7 @@
       cursor: pointer;
     }
 
-    /* Testbutton fürs DOM-Konfetti */
-    #debugConfettiBtn {
-      margin-top: 20px;
-      padding: 10px 20px;
-      background: #3388cc;
-      color: #fff;
-      border: none;
-      cursor: pointer;
-    }
-
-    /* --- DOM-Konfetti-Stile (Container & Animations) --- */
+    /* DOM-Konfetti-Container */
     #confetti-container {
       position: fixed; 
       top: 0; 
@@ -171,13 +161,13 @@
   </style>
 </head>
 <body>
-  <h1>FCK AFD Image Blender (DOM-Konfetti)</h1>
+  <h1>FCK AFD Image Blender (DOM-Konfetti, 3s nonstop)</h1>
 
   <!-- Drag & Drop / Upload-Box -->
   <div id="dropZone">
     <p>Ziehe dein Bild hierher<br/>oder klicke zum Auswählen.</p>
   </div>
-  <button id="processButton">Mischen & Download</button>
+  <button id="processButton">Mischen &amp; Download</button>
 
   <!-- Vorschau (Dummybild) -->
   <img id="preview" src="dummy.png" alt="Bildvorschau" />
@@ -208,13 +198,10 @@
     </div>
   </div>
 
-  <!-- Knopf zum Testen des DOM-Konfettis -->
-  <button id="debugConfettiBtn">Konfetti-Test!</button>
-
   <!-- DOM-Konfetti-Container -->
   <div id="confetti-container"></div>
 
-  <!-- Cropper.js (JS) per CDN -->
+  <!-- Cropper.js (JS) -->
   <script src="https://unpkg.com/cropperjs/dist/cropper.js"></script>
   
   <script>
@@ -229,16 +216,12 @@
 
     // --- Crop-Dialog-Elemente ---
     const cropModal = document.getElementById('cropModal');
-    const cropModalContent = document.getElementById('cropModalContent');
     const cropImage = document.getElementById('cropImage');
     const confirmCropBtn = document.getElementById('confirmCropBtn');
     const cancelCropBtn = document.getElementById('cancelCropBtn');
 
     // --- DOM-Konfetti-Container ---
     const confettiContainer = document.getElementById('confetti-container');
-
-    // Testbutton für DOM-Konfetti
-    const debugConfettiBtn = document.getElementById('debugConfettiBtn');
 
     let cropper = null;               
     let uploadedImageDataURL = null;  
@@ -303,7 +286,7 @@
       cropper = null;
 
       showPreview(uploadedImageDataURL);
-      fileInput.value = ''; // Reset, damit man das selbe Bild nochmal wählen kann
+      fileInput.value = '';
     });
 
     cancelCropBtn.addEventListener('click', () => {
@@ -372,7 +355,7 @@
         // 4) Download
         downloadImage(dataURL, 'FCK_AFD_Blend.png');
 
-        // 5) DOM-Konfetti abfeuern
+        // 5) DOM-Konfetti für 3s
         triggerDomConfetti();
 
         // 6) Reset
@@ -398,10 +381,26 @@
       document.body.removeChild(a);
     }
 
-    // --- DOM-Konfetti-Funktion (CSS-based) ---
+    // --- DOM-Konfetti "nonstop" für 3s ---
     function triggerDomConfetti() {
-      const count = 50;  // Anzahl Konfettiteilchen
-      // Farbpalette (beliebig erweiterbar)
+      // Wir starten ein Intervall, das alle 200ms neue Teilchen erzeugt,
+      // und stoppen nach 3 Sekunden.
+      const startTime = Date.now();
+      const duration = 3000; // 3 Sekunden
+      const interval = setInterval(() => {
+        const now = Date.now();
+        if (now - startTime >= duration) {
+          clearInterval(interval);
+          return;
+        }
+        // Pro Intervall 5 Teilchen erzeugen
+        spawnConfetti(5);
+      }, 200);
+    }
+
+    // --- Hilfsfunktion: Erzeugt "count" Teilchen ---
+    function spawnConfetti(count) {
+      // Farbpalette
       const colors = [
         '#fce18a','#ff726d','#b48def','#f4306d',
         '#85eec0','#57d1cd','#ff9f68','#ffe29f',
@@ -431,17 +430,12 @@
         // Ins DOM
         confettiContainer.appendChild(confetti);
 
-        // Entfernen nach Animation (3s + delay)
+        // Entfernen nach (3s Anim + delay)
         setTimeout(() => {
           confetti.remove();
-        }, (3 + delay) * 1000);
+        }, (3000 + delay * 1000));
       }
     }
-
-    // --- Testbutton fürs DOM-Konfetti ---
-    debugConfettiBtn.addEventListener('click', () => {
-      triggerDomConfetti();
-    });
   </script>
 </body>
 </html>
