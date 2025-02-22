@@ -20,7 +20,7 @@
     body {
       margin: 0;
       padding: 0;
-      background-color: #f8dfd5;
+      background-color: #f8dfd5; /* helles Peach */
       display: flex;
       flex-direction: column;
       min-height: 100vh;
@@ -30,7 +30,7 @@
       position: relative;
     }
 
-    /* Header-Balken mit zweizeiligem Titel */
+    /* Header-Balken */
     header {
       background: #f2bca2;
       padding: 15px 20px;
@@ -48,6 +48,7 @@
          0 -2px var(--title-outline);
     }
 
+    /* Hauptbereich */
     main {
       flex: 1;
       display: flex;
@@ -75,7 +76,7 @@
       color: #7b3f2f;
     }
 
-    /* Container für Overlay-Icons (1..5) + Plus-Box (6) */
+    /* Icon-Container */
     #iconContainer {
       display: flex;
       flex-wrap: wrap;
@@ -95,9 +96,9 @@
     }
     .overlayIcon:hover { border-color: #da8f6b; }
     .overlayIcon.selected { border: 2px solid #b84b37; }
-    /* Plus-Box: soll als 6. Icon erscheinen */
+    /* Plus-Box für das 6. Icon */
     .plusBox {
-      display: none;
+      display: none; /* erst ab 5. Durchgang sichtbar */
       width: 90px;
       height: 90px;
       font-size: 70px;
@@ -115,9 +116,7 @@
     #dropZone {
       width: 300px;
       height: 200px;
-      background:
-        linear-gradient(rgba(242,188,162,0.7), rgba(242,188,162,0.7)),
-        url('dummy.png') center / cover no-repeat;
+      background: linear-gradient(rgba(242,188,162,0.7), rgba(242,188,162,0.7)), url('dummy.png') center / cover no-repeat;
       border: 2px dashed #da8f6b;
       display: flex;
       align-items: center;
@@ -127,9 +126,7 @@
       margin-bottom: 20px;
     }
     #dropZone.hover {
-      background:
-        linear-gradient(rgba(242,188,162,0.9), rgba(242,188,162,0.9)),
-        url('dummy.png') center / cover no-repeat;
+      background: linear-gradient(rgba(242,188,162,0.9), rgba(242,188,162,0.9)), url('dummy.png') center / cover no-repeat;
     }
     #dropZone p {
       font-size: 14px;
@@ -139,7 +136,7 @@
       max-width: 80%;
     }
 
-    /* Vorschau nach Crop */
+    /* Bildvorschau */
     #preview {
       width: 300px;
       height: auto;
@@ -149,7 +146,7 @@
       display: none;
     }
 
-    /* Mischen-Button (immer sichtbar) */
+    /* Mischen-Button */
     #mixButton {
       padding: 10px 20px;
       background: #b84b37;
@@ -162,7 +159,7 @@
     }
     #mixButton:hover { background: #a43e31; }
 
-    /* Footer mit Counter */
+    /* Footer */
     footer {
       position: relative;
       background: #f2bca2;
@@ -182,7 +179,7 @@
       border-radius: 5px;
     }
 
-    /* Canvas ausblenden */
+    /* Canvas */
     canvas { display: none; }
 
     /* Crop-Dialog */
@@ -316,7 +313,7 @@
       }
     }
 
-    /* Zentrale Botschaft (nach Download) – jetzt doppelt so groß */
+    /* Zentrale Botschaft (doppelt so groß) */
     #centerMessage {
       position: fixed;
       top: 50%;
@@ -324,7 +321,7 @@
       transform: translate(-50%, -50%);
       display: none;
       font-family: var(--title-font);
-      font-size: 4.4rem; /* doppelt so groß */
+      font-size: 4.4rem;
       color: var(--title-color);
       text-shadow:
         -1px 0 var(--title-outline),
@@ -470,7 +467,7 @@
     }
 
     /****************************************
-     * 3) Drag & Drop / Klick Upload
+     * 3) DropZone / Klick Upload
     ****************************************/
     dropZone.addEventListener('dragover', (e) => {
       e.preventDefault();
@@ -495,7 +492,7 @@
       }
     });
 
-    // Plus-Box (6. Icon): Klick -> Upload starten
+    // Plus-Box: Klick => Upload starten
     plusIcon.addEventListener('click', () => {
       fileInput.click();
     });
@@ -505,7 +502,6 @@
       reader.onload = (e) => {
         cropImage.src = e.target.result;
         cropModal.style.display = 'flex';
-
         if (cropper) {
           cropper.destroy();
           cropper = null;
@@ -536,7 +532,7 @@
       cropper.destroy();
       cropper = null;
 
-      // Zeige das Bild in #preview und blende #dropZone aus
+      // Zeige Bild in #preview, verstecke #dropZone
       preview.src = uploadedImageDataURL;
       preview.style.display = 'block';
       dropZone.style.display = 'none';
@@ -584,24 +580,17 @@
     function combineImages(baseImage, overlaySrc) {
       const overlayImg = new Image();
       overlayImg.onload = () => {
-        canvas.width = baseImage.width;
+        canvas.width  = baseImage.width;
         canvas.height = baseImage.height;
-
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.globalCompositeOperation = 'source-over';
         ctx.drawImage(baseImage, 0, 0, canvas.width, canvas.height);
-
         ctx.globalCompositeOperation = 'soft-light';
         ctx.drawImage(overlayImg, 0, 0, canvas.width, canvas.height);
-
         const finalDataURL = canvas.toDataURL('image/png');
-
         resultModal.style.display = 'flex';
         finalImage.src = finalDataURL;
-
         startConfetti();
-
-        // Reset Upload-UI (DropZone bleibt ausgeblendet, da Preview gezeigt wird)
         fileInput.value = '';
         uploadedImageDataURL = null;
         selectedOverlaySrc = null;
@@ -622,15 +611,12 @@
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-
       mixCounterValue++;
       localStorage.setItem('mixCounterValue', mixCounterValue);
       updateCounterUI();
-
       timesInRow++;
       stopConfetti();
       resultModal.style.display = 'none';
-
       setTimeout(() => {
         showCenterMessage();
       }, 50);
@@ -660,38 +646,31 @@
       for (let i = 0; i < count; i++) {
         const confetti = document.createElement('div');
         confetti.classList.add('confetti');
-
         const c = colors[Math.floor(Math.random() * colors.length)];
         confetti.style.backgroundColor = c;
-
         const startX = Math.random() * 100;
         let endX = startX + (Math.random() * 40 - 20);
         if (endX < 0) endX = 0;
         if (endX > 100) endX = 100;
         confetti.style.setProperty('--startX', startX + '%');
         confetti.style.setProperty('--endX', endX + '%');
-
         const delay = Math.random() * 0.4;
         confetti.style.animationDelay = delay + 's';
-
         confettiContainer.appendChild(confetti);
-        setTimeout(() => {
-          confetti.remove();
-        }, (5000 + delay * 1000));
+        setTimeout(() => { confetti.remove(); }, (5000 + delay * 1000));
       }
     }
 
     /****************************************
      * 9) Botschaft nach Download
     ****************************************/
+    let timesInRow = 0; // Bereits oben deklariert? (nur einmal)
     function showCenterMessage() {
       let idx = timesInRow - 1;
       if (idx >= messages.length) idx = messages.length - 1;
-
       centerMessage.textContent = messages[idx];
       centerMessage.style.display = 'block';
       messageVisible = true;
-
       if (timesInRow >= 5) {
         plusIcon.style.display = 'inline-block';
       }
@@ -702,10 +681,12 @@
       if (messageVisible && !e.target.closest('#centerMessage')) {
         centerMessage.style.display = 'none';
         messageVisible = false;
-        /* Upload-Fläche zurücksetzen */
         dropZone.style.display = 'flex';
         preview.style.display = 'none';
-        plusIcon.style.display = 'none';
+        // Nur zurücksetzen, wenn noch nicht mindestens 5 Durchgänge
+        if (timesInRow < 5) {
+          plusIcon.style.display = 'none';
+        }
       }
     });
   </script>
