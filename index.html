@@ -20,7 +20,7 @@
     body {
       margin: 0;
       padding: 0;
-      background-color: #f8dfd5; /* helles Peach */
+      background-color: #f8dfd5;
       display: flex;
       flex-direction: column;
       min-height: 100vh;
@@ -30,7 +30,7 @@
       position: relative;
     }
 
-    /* Header-Balken */
+    /* Header */
     header {
       background: #f2bca2;
       padding: 15px 20px;
@@ -76,7 +76,7 @@
       color: #7b3f2f;
     }
 
-    /* Icon-Container */
+    /* Container für Overlay-Icons */
     #iconContainer {
       display: flex;
       flex-wrap: wrap;
@@ -96,7 +96,7 @@
     }
     .overlayIcon:hover { border-color: #da8f6b; }
     .overlayIcon.selected { border: 2px solid #b84b37; }
-    /* Plus-Box für das 6. Icon */
+    /* Plus-Box als 6. Icon */
     .plusBox {
       display: none; /* erst ab 5. Durchgang sichtbar */
       width: 90px;
@@ -105,18 +105,19 @@
       line-height: 90px;
       text-align: center;
       color: #333;
-      border: 2px solid transparent;
+      border: 2px dashed #da8f6b; /* farbige Fläche mit gestrichelter Umrandung */
       border-radius: 4px;
       background: #f8dfd5;
       cursor: pointer;
     }
-    .plusBox:hover { border-color: #da8f6b; }
+    .plusBox:hover { border-color: #a43e31; }
 
     /* DropZone */
     #dropZone {
       width: 300px;
       height: 200px;
-      background: linear-gradient(rgba(242,188,162,0.7), rgba(242,188,162,0.7)), url('dummy.png') center / cover no-repeat;
+      background: linear-gradient(rgba(242,188,162,0.7), rgba(242,188,162,0.7)),
+                  url('dummy.png') center / cover no-repeat;
       border: 2px dashed #da8f6b;
       display: flex;
       align-items: center;
@@ -126,7 +127,8 @@
       margin-bottom: 20px;
     }
     #dropZone.hover {
-      background: linear-gradient(rgba(242,188,162,0.9), rgba(242,188,162,0.9)), url('dummy.png') center / cover no-repeat;
+      background: linear-gradient(rgba(242,188,162,0.9), rgba(242,188,162,0.9)),
+                  url('dummy.png') center / cover no-repeat;
     }
     #dropZone p {
       font-size: 14px;
@@ -208,10 +210,7 @@
       max-height: 70vh;
       border: 1px solid #ccc;
     }
-    #cropButtons {
-      margin-top: 20px;
-      text-align: center;
-    }
+    #cropButtons { margin-top: 20px; text-align: center; }
     .modalBtn {
       background-color: #b84b37;
       color: #fff;
@@ -313,7 +312,7 @@
       }
     }
 
-    /* Zentrale Botschaft (doppelt so groß) */
+    /* Zentrale Botschaft – doppelt so groß */
     #centerMessage {
       position: fixed;
       top: 50%;
@@ -334,6 +333,18 @@
       border-radius: 8px;
       max-width: 80%;
       text-align: center;
+    }
+    
+    /* Social Media Icons */
+    #socialContainer {
+      text-align: center;
+      margin: 20px 0;
+    }
+    .socialIcon {
+      width: 40px;
+      height: auto;
+      margin: 0 10px;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -374,6 +385,13 @@
     <p>Bekenne Flagge!</p>
     <div id="mixCounter">Bisher gemischt: 0</div>
   </footer>
+
+  <!-- Social Media Icons -->
+  <div id="socialContainer">
+    <img src="facebook.png" alt="Facebook" class="socialIcon" />
+    <img src="Instagram.png" alt="Instagram" class="socialIcon" />
+    <img src="linkedin.png" alt="LinkedIn" class="socialIcon" />
+  </div>
 
   <div id="confetti-container"></div>
 
@@ -527,12 +545,10 @@
         height: 1000
       });
       uploadedImageDataURL = croppedCanvas.toDataURL('image/png');
-
       cropModal.style.display = 'none';
       cropper.destroy();
       cropper = null;
-
-      // Zeige Bild in #preview, verstecke #dropZone
+      // Zeige Bild in #preview und verstecke #dropZone
       preview.src = uploadedImageDataURL;
       preview.style.display = 'block';
       dropZone.style.display = 'none';
@@ -664,7 +680,6 @@
     /****************************************
      * 9) Botschaft nach Download
     ****************************************/
-    let timesInRow = 0; // Bereits oben deklariert? (nur einmal)
     function showCenterMessage() {
       let idx = timesInRow - 1;
       if (idx >= messages.length) idx = messages.length - 1;
@@ -676,14 +691,14 @@
       }
     }
 
-    /* Globaler Klick: Wenn Botschaft sichtbar, ausblenden und Upload zurücksetzen */
+    /* Globaler Klick: Wenn Botschaft sichtbar und nicht in #centerMessage oder im #iconContainer, dann ausblenden und Upload zurücksetzen. 
+       Sobald Bonuslevel freigeschaltet ist (timesInRow >= 5), bleibt das Plus-Icon sichtbar. */
     document.addEventListener('click', (e) => {
-      if (messageVisible && !e.target.closest('#centerMessage')) {
+      if (messageVisible && !e.target.closest('#centerMessage') && !e.target.closest('#iconContainer')) {
         centerMessage.style.display = 'none';
         messageVisible = false;
         dropZone.style.display = 'flex';
         preview.style.display = 'none';
-        // Nur zurücksetzen, wenn noch nicht mindestens 5 Durchgänge
         if (timesInRow < 5) {
           plusIcon.style.display = 'none';
         }
