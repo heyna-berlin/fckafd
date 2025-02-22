@@ -11,7 +11,6 @@
   <link rel="stylesheet" href="https://unpkg.com/cropperjs/dist/cropper.css" />
 
   <style>
-    /* --- CSS-Variablen (Schrift & Farben) --- */
     :root {
       --title-font: 'Chewy', cursive;
       --title-color: #e20f0f;   /* Rot */
@@ -34,7 +33,7 @@
       position: relative;
     }
 
-    /* --- Header-Balken mit zweizeiligem Titel --- */
+    /* Header-Balken mit zweizeiligem Titel */
     header {
       background: #f2bca2;
       padding: 15px 20px;
@@ -52,7 +51,6 @@
          0 -2px var(--title-outline);
     }
 
-    /* --- Hauptbereich --- */
     main {
       flex: 1;
       display: flex;
@@ -61,8 +59,6 @@
       justify-content: flex-start;
       padding: 20px;
     }
-
-    /* "Hej!" */
     #introTitle {
       margin-top: 20px;
       font-size: 2rem;
@@ -82,7 +78,7 @@
       color: #7b3f2f;
     }
 
-    /* Container für Overlay-Icons (1..5) und +-Icon (6) */
+    /* Icons (1..5) + 6. plusIcon */
     #iconContainer {
       display: flex;
       flex-wrap: wrap;
@@ -135,7 +131,7 @@
       max-width: 80%;
     }
 
-    /* Bildvorschau */
+    /* Bildvorschau nach Crop */
     #preview {
       width: 300px;
       height: auto;
@@ -145,7 +141,7 @@
       display: none; /* erst sichtbar nach Crop */
     }
 
-    /* Button Mischen (immer sichtbar) */
+    /* "Mischen"-Button immer sichtbar */
     #mixButton {
       padding: 10px 20px;
       background: #b84b37;
@@ -160,7 +156,6 @@
       background: #a43e31;
     }
 
-    /* Fußzeile mit Counter */
     footer {
       position: relative;
       background: #f2bca2;
@@ -188,7 +183,7 @@
       display: none;
     }
 
-    /* Crop-Dialog (Modal) */
+    /* Crop-Dialog */
     #cropModal {
       position: fixed;
       top: 0; left: 0;
@@ -259,8 +254,6 @@
       flex-direction: column;
       align-items: center;
     }
-
-    /* "You rock!" in Titel-Font/Farbe */
     #youRock {
       margin: 0;
       font-size: 2.2rem;
@@ -273,7 +266,6 @@
          0 -1px var(--title-outline);
       margin-bottom: 20px;
     }
-
     #finalImage {
       display: block;
       max-width: 100%;
@@ -328,13 +320,13 @@
       }
     }
 
-    /* --- Zentrale Botschaft (timesInRow) nach Download --- */
+    /* Zentrale Botschaft nach Download */
     #centerMessage {
       position: fixed;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      display: none; /* erst einblenden wenn nötig */
+      display: none;
       font-family: var(--title-font);
       font-size: 2.2rem;
       color: var(--title-color);
@@ -343,7 +335,7 @@
          1px 0 var(--title-outline),
          0  1px var(--title-outline),
          0 -1px var(--title-outline);
-      z-index: 999999999; /* über allem */
+      z-index: 999999999;
       background: rgba(255,255,255,0.8);
       padding: 20px;
       border-radius: 8px;
@@ -366,15 +358,12 @@
       Keine Angst, die Bilder werden nicht gespeichert.
     </p>
 
-    <!-- Container für 5 + 1 Overlays -->
     <div id="iconContainer">
       <img src="Icon1.png" class="overlayIcon" data-icon="Icon1.png" alt="Overlay 1" />
       <img src="Icon2.png" class="overlayIcon" data-icon="Icon2.png" alt="Overlay 2" />
       <img src="Icon3.png" class="overlayIcon" data-icon="Icon3.png" alt="Overlay 3" />
       <img src="Icon4.png" class="overlayIcon" data-icon="Icon4.png" alt="Overlay 4" />
       <img src="Icon5.png" class="overlayIcon" data-icon="Icon5.png" alt="Overlay 5" />
-
-      <!-- Das 6. Icon (Plus), anfangs unsichtbar -->
       <img src="Icon6.png" id="plusIcon" class="overlayIcon" data-icon="Icon6.png" alt="Overlay 6" style="display: none;" />
     </div>
 
@@ -393,10 +382,9 @@
     <div id="mixCounter">Bisher gemischt: 0</div>
   </footer>
 
-  <!-- Konfetti Container -->
   <div id="confetti-container"></div>
 
-  <!-- Die zentrale Botschaft (timesInRow) -->
+  <!-- Botschaft -->
   <div id="centerMessage"></div>
 
   <!-- Crop-Dialog -->
@@ -419,27 +407,24 @@
     </div>
   </div>
 
-  <!-- File Input (versteckt) -->
   <input type="file" id="fileInput" accept="image/*" style="display: none;" />
 
   <!-- Cropper.js JS -->
   <script src="https://unpkg.com/cropperjs/dist/cropper.js"></script>
 
   <script>
-    /****************************************
-     * 1) Variablen / Selektoren
-    ****************************************/
+    /* ---------- Variablen / Selektoren ---------- */
     const dropZone     = document.getElementById('dropZone');
     const preview      = document.getElementById('preview');
     const fileInput    = document.getElementById('fileInput');
     const mixButton    = document.getElementById('mixButton');
     const overlayIcons = document.querySelectorAll('.overlayIcon');
-    const plusIcon     = document.getElementById('plusIcon'); // Icon 6
+    const plusIcon     = document.getElementById('plusIcon');
 
     const canvas       = document.getElementById('canvas');
     const ctx          = canvas.getContext('2d');
 
-    // Crop-Dialog
+    // Crop
     const cropModal      = document.getElementById('cropModal');
     const cropImage      = document.getElementById('cropImage');
     const confirmCropBtn = document.getElementById('confirmCropBtn');
@@ -450,10 +435,6 @@
     const finalImage  = document.getElementById('finalImage');
     const downloadBtn = document.getElementById('downloadBtn');
 
-    // Counter
-    let mixCounterValue = 0;
-    const mixCounterDiv = document.getElementById('mixCounter');
-
     // Konfetti
     const confettiContainer = document.getElementById('confetti-container');
     let confettiInterval = null;
@@ -461,9 +442,8 @@
     // Botschaft
     const centerMessage = document.getElementById('centerMessage');
     let messageVisible  = false;
+    let timesInRow      = 0;
 
-    // Durchgänge hintereinander
-    let timesInRow = 0;  
     const messages = [
       "Gleich nochmal ?",
       "Uh! Ein Überzeugungstäter!",
@@ -472,15 +452,16 @@
       "Captain! Ein Bonuslevel!!!"
     ];
 
+    // localStorage-Gesamtzähler
+    let mixCounterValue = 0;
+    const mixCounterDiv = document.getElementById('mixCounter');
+
     // Cropper
     let cropper = null;
     let uploadedImageDataURL = null;
     let selectedOverlaySrc   = null;
 
-
-    /****************************************
-     * 2) localStorage - Counter
-    ****************************************/
+    /* ---------- localStorage laden ---------- */
     document.addEventListener('DOMContentLoaded', () => {
       const stored = localStorage.getItem('mixCounterValue');
       if (stored) {
@@ -492,9 +473,7 @@
       mixCounterDiv.textContent = `Bisher gemischt: ${mixCounterValue}`;
     }
 
-    /****************************************
-     * 3) Drag & Drop / Klick
-    ****************************************/
+    /* ---------- DropZone / Klick ---------- */
     dropZone.addEventListener('dragover', (e) => {
       e.preventDefault();
       dropZone.classList.add('hover');
@@ -512,15 +491,14 @@
     dropZone.addEventListener('click', () => {
       fileInput.click();
     });
+    // Klick auf Icon6 => ebenfalls Upload
+    plusIcon.addEventListener('click', () => {
+      fileInput.click();
+    });
     fileInput.addEventListener('change', () => {
       if (fileInput.files && fileInput.files.length > 0) {
         handleFile(fileInput.files[0]);
       }
-    });
-
-    // Das 6. Icon: Klick => handleFile (Upload)
-    plusIcon.addEventListener('click', () => {
-      fileInput.click();
     });
 
     function handleFile(file) {
@@ -529,7 +507,6 @@
         cropImage.src = e.target.result;
         cropModal.style.display = 'flex';
 
-        // Alten Cropper zerstören
         if (cropper) {
           cropper.destroy();
           cropper = null;
@@ -545,10 +522,7 @@
       reader.readAsDataURL(file);
     }
 
-
-    /****************************************
-     * 4) Crop-Dialog: OK/Abbrechen
-    ****************************************/
+    /* ---------- Crop-Dialog: OK / Abbrechen ---------- */
     confirmCropBtn.addEventListener('click', () => {
       if (!cropper) return;
       const croppedCanvas = cropper.getCroppedCanvas({
@@ -557,12 +531,11 @@
       });
       uploadedImageDataURL = croppedCanvas.toDataURL('image/png');
 
-      // Dialog aus
       cropModal.style.display = 'none';
       cropper.destroy();
       cropper = null;
 
-      // Zeige das Bild in #preview, verstecke #dropZone
+      // #preview statt #dropZone
       preview.src = uploadedImageDataURL;
       preview.style.display = 'block';
       dropZone.style.display = 'none';
@@ -577,10 +550,7 @@
       fileInput.value = '';
     });
 
-
-    /****************************************
-     * 5) Overlay-Auswahl
-    ****************************************/
+    /* ---------- Overlay-Auswahl ---------- */
     overlayIcons.forEach(icon => {
       icon.addEventListener('click', () => {
         overlayIcons.forEach(i => i.classList.remove('selected'));
@@ -589,10 +559,7 @@
       });
     });
 
-
-    /****************************************
-     * 6) Mischen
-    ****************************************/
+    /* ---------- Mischen ---------- */
     mixButton.addEventListener('click', () => {
       if (!uploadedImageDataURL) {
         alert("Bitte erst ein Bild hochladen & zuschneiden!");
@@ -602,6 +569,7 @@
         alert("Bitte ein Overlay auswählen!");
         return;
       }
+
       const baseImage = new Image();
       baseImage.onload = () => {
         combineImages(baseImage, selectedOverlaySrc);
@@ -615,37 +583,34 @@
         canvas.width  = baseImage.width;
         canvas.height = baseImage.height;
 
-        // 1) Basisbild
+        // Basisbild
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.globalCompositeOperation = 'source-over';
         ctx.drawImage(baseImage, 0, 0, canvas.width, canvas.height);
 
-        // 2) Overlay
+        // Overlay
         ctx.globalCompositeOperation = 'soft-light';
         ctx.drawImage(overlayImg, 0, 0, canvas.width, canvas.height);
 
         const finalDataURL = canvas.toDataURL('image/png');
 
-        // Ergebnisdialog
-        finalImage.src = finalDataURL;
         resultModal.style.display = 'flex';
+        finalImage.src = finalDataURL;
 
-        // Konfetti
         startConfetti();
 
         // Reset
-        fileInput.value = '';
-        uploadedImageDataURL = null;
-        selectedOverlaySrc = null;
+        fileInput.value          = '';
+        uploadedImageDataURL     = null;
+        selectedOverlaySrc       = null;
         overlayIcons.forEach(i => i.classList.remove('selected'));
       };
       overlayImg.src = overlaySrc;
     }
 
+    /* ---------- Download & Botschaft ---------- */
+    let timesInRow = 0;
 
-    /****************************************
-     * 7) Download-Button -> Zähler, End
-    ****************************************/
     downloadBtn.addEventListener('click', () => {
       const dataURL = finalImage.src;
       const a = document.createElement('a');
@@ -655,28 +620,26 @@
       a.click();
       document.body.removeChild(a);
 
-      // Gesamter globaler Counter +1
+      // globaler Counter +1
       mixCounterValue++;
       localStorage.setItem('mixCounterValue', mixCounterValue);
       updateCounterUI();
 
-      // timesInRow + 1 => Botschaft
+      // timesInRow +1
       timesInRow++;
-      showCenterMessage();
 
-      // Konfetti stoppen
       stopConfetti();
-
-      // Ergebnisdialog zu
       resultModal.style.display = 'none';
+
+      // WICHTIG: Minimale Verzögerung => Botschaft
+      setTimeout(() => {
+        showCenterMessage();
+      }, 50);
     });
 
-
-    /****************************************
-     * 8) Konfetti-Funktionen
-    ****************************************/
+    /* ---------- Konfetti ---------- */
     function startConfetti() {
-      stopConfetti(); 
+      stopConfetti();
       confettiInterval = setInterval(() => {
         spawnConfetti(5);
       }, 200);
@@ -687,7 +650,6 @@
         confettiInterval = null;
       }
     }
-
     function spawnConfetti(count) {
       const colors = [
         '#fce18a','#ff726d','#b48def','#f4306d',
@@ -718,13 +680,8 @@
       }
     }
 
-
-    /****************************************
-     * 9) Botschaft je nach timesInRow
-    ****************************************/
+    /* ---------- Botschaft nach Download ---------- */
     function showCenterMessage() {
-      // Falls timesInRow <= 5 => nimm messages[timesInRow-1]
-      // Falls timesInRow > 5 => bleibe beim letzten
       let idx = timesInRow - 1;
       if (idx >= messages.length) idx = messages.length - 1;
 
@@ -732,21 +689,17 @@
       centerMessage.style.display = 'block';
       messageVisible = true;
 
-      // Ab dem 5. Durchgang => zeige 6. Icon
+      // Ab dem 5. Durchgang: zeige Icon6
       if (timesInRow >= 5) {
         plusIcon.style.display = 'inline-block';
       }
     }
 
-    // Klick irgendwo => ggf. Botschaft ausblenden
+    // Klick irgendwo => Botschaft ausblenden
     document.addEventListener('click', (e) => {
-      // Wenn gerade die Botschaft angezeigt wird,
-      // und wir klicken NICHT direkt auf #centerMessage,
-      // blende sie aus.
       if (messageVisible && !e.target.closest('#centerMessage')) {
         centerMessage.style.display = 'none';
         messageVisible = false;
-        // timesInRow bleibt, so kann man erneut mischen
       }
     });
   </script>
