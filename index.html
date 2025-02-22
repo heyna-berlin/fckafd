@@ -76,48 +76,13 @@
       color: #7b3f2f;
     }
 
-    /* Container für Overlay-Icons */
-    #iconContainer {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 20px;
-      max-width: 600px;
-      margin-bottom: 30px;
-    }
-    .overlayIcon {
-      width: 90px;
-      height: 90px;
-      object-fit: cover;
-      cursor: pointer;
-      border: 2px solid transparent;
-      border-radius: 4px;
-      transition: border 0.3s;
-    }
-    .overlayIcon:hover { border-color: #da8f6b; }
-    .overlayIcon.selected { border: 2px solid #b84b37; }
-    /* Plus-Box als 6. Icon */
-    .plusBox {
-      display: none; /* erst ab 5. Durchgang sichtbar */
-      width: 90px;
-      height: 90px;
-      font-size: 70px;
-      line-height: 90px;
-      text-align: center;
-      color: #333;
-      border: 2px dashed #da8f6b; /* farbige Fläche mit gestrichelter Umrandung */
-      border-radius: 4px;
-      background: #f8dfd5;
-      cursor: pointer;
-    }
-    .plusBox:hover { border-color: #a43e31; }
-
     /* DropZone */
     #dropZone {
       width: 300px;
       height: 200px;
-      background: linear-gradient(rgba(242,188,162,0.7), rgba(242,188,162,0.7)),
-                  url('dummy.png') center / cover no-repeat;
+      background:
+        linear-gradient(rgba(242,188,162,0.7), rgba(242,188,162,0.7)),
+        url('dummy.png') center / cover no-repeat;
       border: 2px dashed #da8f6b;
       display: flex;
       align-items: center;
@@ -127,8 +92,9 @@
       margin-bottom: 20px;
     }
     #dropZone.hover {
-      background: linear-gradient(rgba(242,188,162,0.9), rgba(242,188,162,0.9)),
-                  url('dummy.png') center / cover no-repeat;
+      background:
+        linear-gradient(rgba(242,188,162,0.9), rgba(242,188,162,0.9)),
+        url('dummy.png') center / cover no-repeat;
     }
     #dropZone p {
       font-size: 14px;
@@ -160,6 +126,42 @@
       margin-bottom: 30px;
     }
     #mixButton:hover { background: #a43e31; }
+
+    /* Container für Overlay-Icons – jetzt nach dem Mischen-Button */
+    #iconContainer {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      max-width: 600px;
+      margin-bottom: 30px;
+    }
+    .overlayIcon {
+      width: 90px;
+      height: 90px;
+      object-fit: cover;
+      cursor: pointer;
+      border: 2px solid transparent;
+      border-radius: 4px;
+      transition: border 0.3s;
+    }
+    .overlayIcon:hover { border-color: #da8f6b; }
+    .overlayIcon.selected { border: 2px solid #b84b37; }
+    /* Plus-Box für das 6. Icon */
+    .plusBox {
+      display: none; /* erst ab Bonuslevel sichtbar */
+      width: 90px;
+      height: 90px;
+      font-size: 70px;
+      line-height: 90px;
+      text-align: center;
+      color: #333;
+      border: 2px dashed #da8f6b;
+      border-radius: 4px;
+      background: #f8dfd5;
+      cursor: pointer;
+    }
+    .plusBox:hover { border-color: #a43e31; }
 
     /* Footer */
     footer {
@@ -210,7 +212,10 @@
       max-height: 70vh;
       border: 1px solid #ccc;
     }
-    #cropButtons { margin-top: 20px; text-align: center; }
+    #cropButtons {
+      margin-top: 20px;
+      text-align: center;
+    }
     .modalBtn {
       background-color: #b84b37;
       color: #fff;
@@ -334,7 +339,7 @@
       max-width: 80%;
       text-align: center;
     }
-    
+
     /* Social Media Icons */
     #socialContainer {
       text-align: center;
@@ -362,6 +367,16 @@
       Keine Angst, die Bilder werden nicht gespeichert.
     </p>
 
+    <!-- Zuerst Upload-Bereich -->
+    <div id="dropZone">
+      <p>Ziehe dein Bild hierher<br>oder klicke zum Auswählen.</p>
+    </div>
+    <img id="preview" src="dummy.png" alt="Dein Bild" />
+
+    <!-- Mischen-Button -->
+    <button id="mixButton">Mischen</button>
+
+    <!-- Hier kommen die Overlay-Icons (Bonuslevel-Icons) -->
     <div id="iconContainer">
       <img src="Icon1.png" class="overlayIcon" data-icon="Icon1.png" alt="Overlay 1" />
       <img src="Icon2.png" class="overlayIcon" data-icon="Icon2.png" alt="Overlay 2" />
@@ -370,13 +385,6 @@
       <img src="Icon5.png" class="overlayIcon" data-icon="Icon5.png" alt="Overlay 5" />
       <div id="plusIcon" class="overlayIcon plusBox">+</div>
     </div>
-
-    <div id="dropZone">
-      <p>Ziehe dein Bild hierher<br>oder klicke zum Auswählen.</p>
-    </div>
-    <img id="preview" src="dummy.png" alt="Dein Bild" />
-
-    <button id="mixButton">Mischen</button>
 
     <canvas id="canvas"></canvas>
   </main>
@@ -394,7 +402,6 @@
   </div>
 
   <div id="confetti-container"></div>
-
   <div id="centerMessage"></div>
 
   <div id="cropModal">
@@ -510,7 +517,7 @@
       }
     });
 
-    // Plus-Box: Klick => Upload starten
+    // Plus-Box: Klick Upload starten
     plusIcon.addEventListener('click', () => {
       fileInput.click();
     });
@@ -691,7 +698,7 @@
       }
     }
 
-    /* Globaler Klick: Wenn Botschaft sichtbar und nicht in #centerMessage oder im #iconContainer, dann ausblenden und Upload zurücksetzen. 
+    /* Globaler Klick: Wenn Botschaft sichtbar und NICHT in #centerMessage oder im #iconContainer, dann ausblenden und Upload zurücksetzen.
        Sobald Bonuslevel freigeschaltet ist (timesInRow >= 5), bleibt das Plus-Icon sichtbar. */
     document.addEventListener('click', (e) => {
       if (messageVisible && !e.target.closest('#centerMessage') && !e.target.closest('#iconContainer')) {
@@ -699,6 +706,7 @@
         messageVisible = false;
         dropZone.style.display = 'flex';
         preview.style.display = 'none';
+        // Nur zurücksetzen, wenn Bonuslevel noch nicht freigeschaltet
         if (timesInRow < 5) {
           plusIcon.style.display = 'none';
         }
