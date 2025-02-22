@@ -30,7 +30,7 @@
       position: relative;
     }
 
-    /* Header */
+    /* Header-Balken mit zweizeiligem Titel */
     header {
       background: #f2bca2;
       padding: 15px 20px;
@@ -48,7 +48,6 @@
          0 -2px var(--title-outline);
     }
 
-    /* Hauptbereich */
     main {
       flex: 1;
       display: flex;
@@ -76,7 +75,7 @@
       color: #7b3f2f;
     }
 
-    /* Overlay-Icons */
+    /* Container für Overlay-Icons (1..5) + Plus-Box (6) */
     #iconContainer {
       display: flex;
       flex-wrap: wrap;
@@ -96,9 +95,9 @@
     }
     .overlayIcon:hover { border-color: #da8f6b; }
     .overlayIcon.selected { border: 2px solid #b84b37; }
-    /* Plus-Box für das 6. Icon */
+    /* Plus-Box: soll als 6. Icon erscheinen */
     .plusBox {
-      display: none; /* erst ab 5. Durchgang sichtbar */
+      display: none;
       width: 90px;
       height: 90px;
       font-size: 70px;
@@ -116,7 +115,9 @@
     #dropZone {
       width: 300px;
       height: 200px;
-      background: linear-gradient(rgba(242,188,162,0.7), rgba(242,188,162,0.7)), url('dummy.png') center / cover no-repeat;
+      background:
+        linear-gradient(rgba(242,188,162,0.7), rgba(242,188,162,0.7)),
+        url('dummy.png') center / cover no-repeat;
       border: 2px dashed #da8f6b;
       display: flex;
       align-items: center;
@@ -126,7 +127,9 @@
       margin-bottom: 20px;
     }
     #dropZone.hover {
-      background: linear-gradient(rgba(242,188,162,0.9), rgba(242,188,162,0.9)), url('dummy.png') center / cover no-repeat;
+      background:
+        linear-gradient(rgba(242,188,162,0.9), rgba(242,188,162,0.9)),
+        url('dummy.png') center / cover no-repeat;
     }
     #dropZone p {
       font-size: 14px;
@@ -136,7 +139,7 @@
       max-width: 80%;
     }
 
-    /* Vorschau */
+    /* Vorschau nach Crop */
     #preview {
       width: 300px;
       height: auto;
@@ -146,7 +149,7 @@
       display: none;
     }
 
-    /* Mischen-Button (dauerhaft sichtbar) */
+    /* Mischen-Button (immer sichtbar) */
     #mixButton {
       padding: 10px 20px;
       background: #b84b37;
@@ -159,7 +162,7 @@
     }
     #mixButton:hover { background: #a43e31; }
 
-    /* Footer */
+    /* Footer mit Counter */
     footer {
       position: relative;
       background: #f2bca2;
@@ -179,7 +182,7 @@
       border-radius: 5px;
     }
 
-    /* Canvas hidden */
+    /* Canvas ausblenden */
     canvas { display: none; }
 
     /* Crop-Dialog */
@@ -208,7 +211,10 @@
       max-height: 70vh;
       border: 1px solid #ccc;
     }
-    #cropButtons { margin-top: 20px; text-align: center; }
+    #cropButtons {
+      margin-top: 20px;
+      text-align: center;
+    }
     .modalBtn {
       background-color: #b84b37;
       color: #fff;
@@ -310,7 +316,7 @@
       }
     }
 
-    /* Zentrale Botschaft */
+    /* Zentrale Botschaft (nach Download) – jetzt doppelt so groß */
     #centerMessage {
       position: fixed;
       top: 50%;
@@ -318,7 +324,7 @@
       transform: translate(-50%, -50%);
       display: none;
       font-family: var(--title-font);
-      font-size: 2.2rem;
+      font-size: 4.4rem; /* doppelt so groß */
       color: var(--title-color);
       text-shadow:
         -1px 0 var(--title-outline),
@@ -449,7 +455,6 @@
     let uploadedImageDataURL = null;
     let selectedOverlaySrc = null;
 
-
     /****************************************
      * 2) localStorage - Counter laden
     ****************************************/
@@ -490,7 +495,7 @@
       }
     });
 
-    // Klick auf Plus-Box => Upload starten
+    // Plus-Box (6. Icon): Klick -> Upload starten
     plusIcon.addEventListener('click', () => {
       fileInput.click();
     });
@@ -579,7 +584,7 @@
     function combineImages(baseImage, overlaySrc) {
       const overlayImg = new Image();
       overlayImg.onload = () => {
-        canvas.width  = baseImage.width;
+        canvas.width = baseImage.width;
         canvas.height = baseImage.height;
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -596,7 +601,7 @@
 
         startConfetti();
 
-        // Reset
+        // Reset Upload-UI (DropZone bleibt ausgeblendet, da Preview gezeigt wird)
         fileInput.value = '';
         uploadedImageDataURL = null;
         selectedOverlaySrc = null;
@@ -626,7 +631,6 @@
       stopConfetti();
       resultModal.style.display = 'none';
 
-      // Zeige die Botschaft nach minimaler Verzögerung
       setTimeout(() => {
         showCenterMessage();
       }, 50);
@@ -688,16 +692,20 @@
       centerMessage.style.display = 'block';
       messageVisible = true;
 
-      // Ab 5. Mal: Plus-Box einblenden
       if (timesInRow >= 5) {
         plusIcon.style.display = 'inline-block';
       }
     }
 
+    /* Globaler Klick: Wenn Botschaft sichtbar, ausblenden und Upload zurücksetzen */
     document.addEventListener('click', (e) => {
       if (messageVisible && !e.target.closest('#centerMessage')) {
         centerMessage.style.display = 'none';
         messageVisible = false;
+        /* Upload-Fläche zurücksetzen */
+        dropZone.style.display = 'flex';
+        preview.style.display = 'none';
+        plusIcon.style.display = 'none';
       }
     });
   </script>
