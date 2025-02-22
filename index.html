@@ -4,17 +4,18 @@
   <meta charset="UTF-8" />
   <title>FCK AFD Bildmischer ;)</title>
 
-  <!-- Google Font (Rubik Bubbles) -->
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik+Bubbles&display=swap" />
-  <!-- Cropper.js -->
+  <!-- Google Font "Chewy" -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chewy&display=swap" />
+
+  <!-- Cropper.js (CDN) -->
   <link rel="stylesheet" href="https://unpkg.com/cropperjs/dist/cropper.css" />
 
   <style>
-    /* --- CSS-Variablen für Farbe/Schrift usw. --- */
+    /* --- CSS-Variablen für Schrift & Farben --- */
     :root {
-      --title-font: 'Rubik Bubbles', cursive;
-      --title-color: #e20f0f;        /* Rot */
-      --title-outline: #05a8d8;      /* Hellblau */
+      --title-font: 'Chewy', cursive;
+      --title-color: #e20f0f;   /* Rot */
+      --title-outline: #fff;    /* Weißer Rand */
     }
 
     * {
@@ -29,23 +30,21 @@
       min-height: 100vh;
       text-align: center;
       color: #333;
-      font-family: sans-serif;
+      font-family: sans-serif; /* Standard, falls woanders kein Title-Font genutzt wird */
     }
 
     /* --- Header-Balken --- */
     header {
       background: #f2bca2;
       padding: 15px 20px;
-      text-align: center;
     }
     header h1 {
       margin: 0;
-      /* Zweizeilig per <br> und Outline */
       font-size: 3rem; 
+      /* Zweizeilig per <br> und Outline */
       font-family: var(--title-font);
       color: var(--title-color);
       line-height: 1.2;
-      /* Outline via text-shadow */
       text-shadow:
         -2px 0 var(--title-outline),
          2px 0 var(--title-outline),
@@ -63,7 +62,7 @@
       padding: 20px;
     }
 
-    /* "Hej!" in Rot mit Outline, selbe Font-Var */
+    /* "Hej!" */
     #introTitle {
       margin-top: 20px;
       font-size: 2rem;
@@ -76,7 +75,6 @@
          0 -1px var(--title-outline);
       line-height: 1.2;
     }
-
     #introText {
       max-width: 600px;
       margin: 10px auto 30px;
@@ -109,7 +107,7 @@
       border: 2px solid #b84b37;
     }
 
-    /* Upload-Bereich: dummy.png bei ~30% deckkraft */
+    /* Upload-Bereich (DropZone) */
     #dropZone {
       width: 300px;
       height: 200px;
@@ -137,7 +135,7 @@
       max-width: 80%;
     }
 
-    /* Mischen-Button (dauerhaft sichtbar) */
+    /* Mischen-Button (immer sichtbar) */
     #mixButton {
       padding: 10px 20px;
       background: #b84b37;
@@ -152,7 +150,7 @@
       background: #a43e31;
     }
 
-    /* --- Footer mit Counter & neuem Text --- */
+    /* Footer */
     footer {
       position: relative;
       background: #f2bca2;
@@ -175,11 +173,11 @@
       border-radius: 5px;
     }
 
-    /* Canvas & Preview hidden */
+    /* Canvas, Preview - hidden */
     #preview { display: none; }
     canvas    { display: none; }
 
-    /* --- Crop-Dialog (Overlay) --- */
+    /* Crop-Dialog */
     #cropModal {
       position: fixed;
       top: 0; left: 0;
@@ -229,7 +227,7 @@
       background-color: #bbb;
     }
 
-    /* --- Ergebnis-Dialog --- */
+    /* Ergebnis-Dialog */
     #resultModal {
       position: fixed;
       top: 0; left: 0;
@@ -246,13 +244,12 @@
       max-width: 500px;
       position: relative;
       padding: 20px 20px 80px 20px; 
-      /* etwas mehr Platz unten, um "You rock!" + Download zu haben */
       display: flex;
       flex-direction: column;
       align-items: center;
     }
 
-    /* "You rock!" in derselben Font/Farben wie Title */
+    /* "You rock!" in derselben Font/Farben */
     #youRock {
       margin: 0;
       font-size: 2.2rem;
@@ -287,7 +284,7 @@
       background-color: #a43e31;
     }
 
-    /* --- Konfetti (DOM) --- */
+    /* Konfetti (DOM) */
     #confetti-container {
       position: fixed; 
       top: 0; left: 0;
@@ -323,15 +320,12 @@
 </head>
 <body>
 
-  <!-- Header-Balken mit zweizeiligem Titel -->
+  <!-- Header-Balken mit zweizeiligem Titel in "Chewy" -->
   <header>
     <h1>FCK AFD<br>Bildmischer ;)</h1>
   </header>
 
-  <!-- Hauptinhalt -->
   <main>
-
-    <!-- "Hej!" in Rot/Outline -->
     <h2 id="introTitle">Hej!</h2>
     <p id="introText">
       Schön, dass du hier bist! Manchmal muss man Flagge bekennen.
@@ -339,7 +333,6 @@
       Keine Angst, die Bilder werden nicht gespeichert.
     </p>
 
-    <!-- Icon-Auswahl -->
     <div id="iconContainer">
       <img src="Icon1.png" class="overlayIcon" data-icon="Icon1.png" alt="Overlay 1" />
       <img src="Icon2.png" class="overlayIcon" data-icon="Icon2.png" alt="Overlay 2" />
@@ -348,27 +341,22 @@
       <img src="Icon5.png" class="overlayIcon" data-icon="Icon5.png" alt="Overlay 5" />
     </div>
 
-    <!-- Upload-Bereich (DropZone) -->
     <div id="dropZone">
       <p>Ziehe dein Bild hierher<br>oder klicke zum Auswählen.</p>
     </div>
 
-    <!-- Mischen-Button (immer sichtbar) -->
+    <!-- Mischen-Button IMMER sichtbar -->
     <button id="mixButton">Mischen</button>
 
-    <!-- Canvas & evtl. Hidden-Preview -->
     <canvas id="canvas"></canvas>
     <img id="preview" src="dummy.png" alt="Bildvorschau" style="display: none;" />
-
   </main>
 
-  <!-- Footer mit neuem Text & Counter -->
   <footer>
     <p>Bekenne Flagge!</p>
     <div id="mixCounter">Bisher gemischt: 0</div>
   </footer>
 
-  <!-- Konfetti-Container -->
   <div id="confetti-container"></div>
 
   <!-- Crop-Dialog -->
@@ -382,7 +370,7 @@
     </div>
   </div>
 
-  <!-- Ergebnis-Dialog (inkl. "You rock!") -->
+  <!-- Ergebnis-Dialog (mit "You rock!") -->
   <div id="resultModal">
     <div id="resultModalContent">
       <h3 id="youRock">You rock!</h3>
@@ -391,16 +379,15 @@
     </div>
   </div>
 
-  <!-- File Input versteckt -->
   <input type="file" id="fileInput" accept="image/*" style="display: none;" />
 
   <!-- Cropper.js JS -->
   <script src="https://unpkg.com/cropperjs/dist/cropper.js"></script>
-
-  <!-- Dein Skript (mit localStorage-Counter, Konfetti etc.) -->
+  
+  <!-- Haupt-JavaScript (Counter, Konfetti, etc.) -->
   <script>
     /****************************************
-     * 1) Selektoren, Variablen
+     * 1) Variablen / Selektoren
     ****************************************/
     const dropZone     = document.getElementById('dropZone');
     const fileInput    = document.getElementById('fileInput');
@@ -421,7 +408,7 @@
     const finalImage  = document.getElementById('finalImage');
     const downloadBtn = document.getElementById('downloadBtn');
 
-    // Footer Counter
+    // Counter
     let mixCounterValue = 0;
     const mixCounterDiv = document.getElementById('mixCounter');
 
@@ -434,8 +421,9 @@
     let uploadedImageDataURL = null;
     let selectedOverlaySrc   = null;
 
+
     /****************************************
-     * 2) localStorage Counter einlesen
+     * 2) localStorage - Counter laden
     ****************************************/
     document.addEventListener('DOMContentLoaded', () => {
       const stored = localStorage.getItem('mixCounterValue');
@@ -480,7 +468,6 @@
         cropImage.src = e.target.result;
         cropModal.style.display = 'flex';
 
-        // Alten Cropper zerstören
         if (cropper) {
           cropper.destroy();
           cropper = null;
@@ -497,7 +484,7 @@
     }
 
     /****************************************
-     * 4) Crop-Dialog: OK/Abbrechen
+     * 4) Crop-Dialog: OK / Abbrechen
     ****************************************/
     confirmCropBtn.addEventListener('click', () => {
       if (!cropper) return;
@@ -544,7 +531,6 @@
         alert("Bitte ein Overlay auswählen!");
         return;
       }
-
       const baseImage = new Image();
       baseImage.onload = () => {
         combineImages(baseImage, selectedOverlaySrc);
@@ -577,9 +563,9 @@
         startConfetti();
 
         // Reset
-        fileInput.value          = '';
-        uploadedImageDataURL     = null;
-        selectedOverlaySrc       = null;
+        fileInput.value = '';
+        uploadedImageDataURL = null;
+        selectedOverlaySrc = null;
         overlayIcons.forEach(i => i.classList.remove('selected'));
       };
       overlayImg.src = overlaySrc;
