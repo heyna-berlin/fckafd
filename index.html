@@ -4,51 +4,53 @@
   <meta charset="UTF-8" />
   <title>FCK AFD Bildmischer ;)</title>
 
-  <!-- Google Font: Rubik Bubbles -->
+  <!-- Google Font (Rubik Bubbles) -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik+Bubbles&display=swap" />
-  <!-- Cropper.js (CDN) -->
+  <!-- Cropper.js -->
   <link rel="stylesheet" href="https://unpkg.com/cropperjs/dist/cropper.css" />
 
   <style>
-    /* --- Grundlayout / Reset --- */
+    /* --- CSS-Variablen für Farbe/Schrift usw. --- */
+    :root {
+      --title-font: 'Rubik Bubbles', cursive;
+      --title-color: #e20f0f;        /* Rot */
+      --title-outline: #05a8d8;      /* Hellblau */
+    }
+
     * {
       box-sizing: border-box;
     }
     body {
       margin: 0;
       padding: 0;
-      font-family: sans-serif;
       background-color: #f8dfd5; /* helles Peach */
       display: flex;
       flex-direction: column;
       min-height: 100vh;
-      color: #333;
       text-align: center;
+      color: #333;
+      font-family: sans-serif;
     }
 
     /* --- Header-Balken --- */
     header {
       background: #f2bca2;
-      color: #7b3f2f;
       padding: 15px 20px;
       text-align: center;
     }
     header h1 {
       margin: 0;
-      /* Zweizeilig per <br> in HTML */
+      /* Zweizeilig per <br> und Outline */
       font-size: 3rem; 
-      /* Rubik Bubbles, Schwarz mit weißer Umrandung */
-      font-family: 'Rubik Bubbles', cursive;
-      color: #000; 
-      text-shadow: 
-        -2px 0 #fff,  /* Outline-Effekt */
-         2px 0 #fff,
-         0  2px #fff,
-         0 -2px #fff;
+      font-family: var(--title-font);
+      color: var(--title-color);
       line-height: 1.2;
-      /* Evtl. mehr vergrößern:
-         font-size: 4rem; 
-      */
+      /* Outline via text-shadow */
+      text-shadow:
+        -2px 0 var(--title-outline),
+         2px 0 var(--title-outline),
+         0  2px var(--title-outline),
+         0 -2px var(--title-outline);
     }
 
     /* --- Hauptbereich --- */
@@ -60,12 +62,21 @@
       justify-content: flex-start;
       padding: 20px;
     }
-    /* Überschrift "Hej!" */
+
+    /* "Hej!" in Rot mit Outline, selbe Font-Var */
     #introTitle {
       margin-top: 20px;
       font-size: 2rem;
-      color: #b84b37;
+      font-family: var(--title-font);
+      color: var(--title-color);
+      text-shadow:
+        -1px 0 var(--title-outline),
+         1px 0 var(--title-outline),
+         0  1px var(--title-outline),
+         0 -1px var(--title-outline);
+      line-height: 1.2;
     }
+
     #introText {
       max-width: 600px;
       margin: 10px auto 30px;
@@ -73,7 +84,7 @@
       color: #7b3f2f;
     }
 
-    /* --- Icon-Auswahl --- */
+    /* Icon-Auswahl */
     #iconContainer {
       display: flex;
       flex-wrap: wrap;
@@ -98,7 +109,7 @@
       border: 2px solid #b84b37;
     }
 
-    /* --- Upload-Bereich (DropZone) mit dummy.png & 30% Deckkraft --- */
+    /* Upload-Bereich: dummy.png bei ~30% deckkraft */
     #dropZone {
       width: 300px;
       height: 200px;
@@ -126,7 +137,7 @@
       max-width: 80%;
     }
 
-    /* --- Mischen-Button (dauerhaft sichtbar) --- */
+    /* Mischen-Button (dauerhaft sichtbar) */
     #mixButton {
       padding: 10px 20px;
       background: #b84b37;
@@ -135,13 +146,13 @@
       cursor: pointer;
       font-size: 1rem;
       border-radius: 4px;
-      margin-bottom: 30px; /* optionaler Abstand */
+      margin-bottom: 30px;
     }
     #mixButton:hover {
       background: #a43e31;
     }
 
-    /* --- Footer (Counter, Statement) --- */
+    /* --- Footer mit Counter & neuem Text --- */
     footer {
       position: relative;
       background: #f2bca2;
@@ -164,7 +175,7 @@
       border-radius: 5px;
     }
 
-    /* --- Canvas und Preview ausblenden (bzw. optional) --- */
+    /* Canvas & Preview hidden */
     #preview { display: none; }
     canvas    { display: none; }
 
@@ -234,13 +245,31 @@
       border-radius: 6px;
       max-width: 500px;
       position: relative;
-      padding: 20px 20px 60px 20px; 
+      padding: 20px 20px 80px 20px; 
+      /* etwas mehr Platz unten, um "You rock!" + Download zu haben */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
+
+    /* "You rock!" in derselben Font/Farben wie Title */
+    #youRock {
+      margin: 0;
+      font-size: 2.2rem;
+      font-family: var(--title-font);
+      color: var(--title-color);
+      text-shadow:
+        -1px 0 var(--title-outline),
+         1px 0 var(--title-outline),
+         0  1px var(--title-outline),
+         0 -1px var(--title-outline);
+      margin-bottom: 20px;
+    }
+
     #finalImage {
       display: block;
       max-width: 100%;
       border-radius: 4px;
-      margin: 0 auto;
     }
     #downloadBtn {
       position: absolute;
@@ -258,7 +287,7 @@
       background-color: #a43e31;
     }
 
-    /* --- Confetti Container & Animationen (DOM) --- */
+    /* --- Konfetti (DOM) --- */
     #confetti-container {
       position: fixed; 
       top: 0; left: 0;
@@ -294,21 +323,16 @@
 </head>
 <body>
 
-  <!-- Header-Balken 
-       Titel zweizeilig per <br> -->
+  <!-- Header-Balken mit zweizeiligem Titel -->
   <header>
-    <h1>
-      FCK AFD<br>
-      Bildmischer ;)
-    </h1>
+    <h1>FCK AFD<br>Bildmischer ;)</h1>
   </header>
 
   <!-- Hauptinhalt -->
   <main>
 
-    <!-- Überschrift "Hej!" -->
+    <!-- "Hej!" in Rot/Outline -->
     <h2 id="introTitle">Hej!</h2>
-    <!-- Intro-Text -->
     <p id="introText">
       Schön, dass du hier bist! Manchmal muss man Flagge bekennen.
       Suche dir einen Look aus und lade dein Bild hoch.
@@ -324,34 +348,33 @@
       <img src="Icon5.png" class="overlayIcon" data-icon="Icon5.png" alt="Overlay 5" />
     </div>
 
-    <!-- Upload-Fläche mit dummy.png -->
+    <!-- Upload-Bereich (DropZone) -->
     <div id="dropZone">
       <p>Ziehe dein Bild hierher<br>oder klicke zum Auswählen.</p>
     </div>
 
-    <!-- Mischen-Button IMMER sichtbar -->
+    <!-- Mischen-Button (immer sichtbar) -->
     <button id="mixButton">Mischen</button>
 
-    <!-- Canvas -->
+    <!-- Canvas & evtl. Hidden-Preview -->
     <canvas id="canvas"></canvas>
-    <!-- Preview optional/hidden -->
     <img id="preview" src="dummy.png" alt="Bildvorschau" style="display: none;" />
 
   </main>
 
-  <!-- Footer mit Statement & Counter -->
+  <!-- Footer mit neuem Text & Counter -->
   <footer>
-    <p>Mach dein Statement!</p>
+    <p>Bekenne Flagge!</p>
     <div id="mixCounter">Bisher gemischt: 0</div>
   </footer>
 
-  <!-- Confetti Container -->
+  <!-- Konfetti-Container -->
   <div id="confetti-container"></div>
 
   <!-- Crop-Dialog -->
   <div id="cropModal">
     <div id="cropModalContent">
-      <img id="cropImage" alt="Crop Image">
+      <img id="cropImage" alt="Crop Image" />
       <div id="cropButtons">
         <button id="confirmCropBtn" class="modalBtn">Zuschneiden</button>
         <button id="cancelCropBtn" class="modalBtn">Abbrechen</button>
@@ -359,25 +382,26 @@
     </div>
   </div>
 
-  <!-- Ergebnis-Dialog -->
+  <!-- Ergebnis-Dialog (inkl. "You rock!") -->
   <div id="resultModal">
     <div id="resultModalContent">
+      <h3 id="youRock">You rock!</h3>
       <img id="finalImage" src="" alt="Fertiges Bild">
       <button id="downloadBtn">Download</button>
     </div>
   </div>
 
-  <!-- Verstecktes File-Input -->
+  <!-- File Input versteckt -->
   <input type="file" id="fileInput" accept="image/*" style="display: none;" />
 
   <!-- Cropper.js JS -->
   <script src="https://unpkg.com/cropperjs/dist/cropper.js"></script>
 
-  <!-- Hier dein bisheriger JS-Code (localStorage-Counter, Konfetti, ...) -->
+  <!-- Dein Skript (mit localStorage-Counter, Konfetti etc.) -->
   <script>
     /****************************************
      * 1) Selektoren, Variablen
-     ****************************************/
+    ****************************************/
     const dropZone     = document.getElementById('dropZone');
     const fileInput    = document.getElementById('fileInput');
     const mixButton    = document.getElementById('mixButton');
@@ -412,7 +436,7 @@
 
     /****************************************
      * 2) localStorage Counter einlesen
-     ****************************************/
+    ****************************************/
     document.addEventListener('DOMContentLoaded', () => {
       const stored = localStorage.getItem('mixCounterValue');
       if (stored) {
@@ -426,7 +450,7 @@
 
     /****************************************
      * 3) Drag & Drop / Klick
-     ****************************************/
+    ****************************************/
     dropZone.addEventListener('dragover', (e) => {
       e.preventDefault();
       dropZone.classList.add('hover');
@@ -474,7 +498,7 @@
 
     /****************************************
      * 4) Crop-Dialog: OK/Abbrechen
-     ****************************************/
+    ****************************************/
     confirmCropBtn.addEventListener('click', () => {
       if (!cropper) return;
       const croppedCanvas = cropper.getCroppedCanvas({
@@ -499,7 +523,7 @@
 
     /****************************************
      * 5) Overlay-Auswahl
-     ****************************************/
+    ****************************************/
     overlayIcons.forEach(icon => {
       icon.addEventListener('click', () => {
         overlayIcons.forEach(i => i.classList.remove('selected'));
@@ -509,10 +533,9 @@
     });
 
     /****************************************
-     * 6) Mischen (Canvas)
-     ****************************************/
+     * 6) Mischen
+    ****************************************/
     mixButton.addEventListener('click', () => {
-      // Button ist immer da, aber checken, ob Bild & Overlay?
       if (!uploadedImageDataURL) {
         alert("Bitte erst ein Bild hochladen & zuschneiden!");
         return;
@@ -546,7 +569,7 @@
 
         const finalDataURL = canvas.toDataURL('image/png');
 
-        // Ergebnisdialog anzeigen
+        // Ergebnisdialog
         finalImage.src = finalDataURL;
         resultModal.style.display = 'flex';
 
@@ -554,17 +577,17 @@
         startConfetti();
 
         // Reset
-        fileInput.value = '';
-        uploadedImageDataURL = null;
-        selectedOverlaySrc = null;
+        fileInput.value          = '';
+        uploadedImageDataURL     = null;
+        selectedOverlaySrc       = null;
         overlayIcons.forEach(i => i.classList.remove('selected'));
       };
       overlayImg.src = overlaySrc;
     }
 
     /****************************************
-     * 7) Ergebnis-Dialog: Download
-     ****************************************/
+     * 7) Download
+    ****************************************/
     downloadBtn.addEventListener('click', () => {
       const dataURL = finalImage.src;
       const a = document.createElement('a');
@@ -588,9 +611,9 @@
 
     /****************************************
      * 8) Konfetti-Funktionen
-     ****************************************/
+    ****************************************/
     function startConfetti() {
-      stopConfetti(); // Falls noch läuft
+      stopConfetti(); 
       confettiInterval = setInterval(() => {
         spawnConfetti(5);
       }, 200);
@@ -603,9 +626,9 @@
     }
     function spawnConfetti(count) {
       const colors = [
-        '#fce18a', '#ff726d', '#b48def', '#f4306d',
-        '#85eec0', '#57d1cd', '#ff9f68', '#ffe29f',
-        '#9fd6ff', '#d9abff'
+        '#fce18a','#ff726d','#b48def','#f4306d',
+        '#85eec0','#57d1cd','#ff9f68','#ffe29f',
+        '#9fd6ff','#d9abff'
       ];
       for (let i = 0; i < count; i++) {
         const confetti = document.createElement('div');
