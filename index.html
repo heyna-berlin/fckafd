@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <title>FCK AFD Bildmischer ;)</title>
 
+  <!-- Google Font: Rubik Bubbles -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik+Bubbles&display=swap" />
   <!-- Cropper.js (CDN) -->
   <link rel="stylesheet" href="https://unpkg.com/cropperjs/dist/cropper.css" />
 
@@ -24,7 +26,7 @@
       text-align: center;
     }
 
-    /* --- Header-Balken oben --- */
+    /* --- Header-Balken --- */
     header {
       background: #f2bca2;
       color: #7b3f2f;
@@ -33,11 +35,23 @@
     }
     header h1 {
       margin: 0;
-      font-size: 1.6rem;
-      color: #b84b37;
+      /* Zweizeilig per <br> in HTML */
+      font-size: 3rem; 
+      /* Rubik Bubbles, Schwarz mit weißer Umrandung */
+      font-family: 'Rubik Bubbles', cursive;
+      color: #000; 
+      text-shadow: 
+        -2px 0 #fff,  /* Outline-Effekt */
+         2px 0 #fff,
+         0  2px #fff,
+         0 -2px #fff;
+      line-height: 1.2;
+      /* Evtl. mehr vergrößern:
+         font-size: 4rem; 
+      */
     }
 
-    /* --- Hauptbereich (Intro, Icons, DropZone, Mix-Button) --- */
+    /* --- Hauptbereich --- */
     main {
       flex: 1;
       display: flex;
@@ -46,15 +60,12 @@
       justify-content: flex-start;
       padding: 20px;
     }
-
-    /* -- Intro-Überschrift "Hej!" -- */
+    /* Überschrift "Hej!" */
     #introTitle {
       margin-top: 20px;
       font-size: 2rem;
       color: #b84b37;
     }
-
-    /* -- Intro-Text darunter -- */
     #introText {
       max-width: 600px;
       margin: 10px auto 30px;
@@ -62,7 +73,7 @@
       color: #7b3f2f;
     }
 
-    /* --- Container für die Icons --- */
+    /* --- Icon-Auswahl --- */
     #iconContainer {
       display: flex;
       flex-wrap: wrap;
@@ -115,7 +126,7 @@
       max-width: 80%;
     }
 
-    /* --- Mix-Button --- */
+    /* --- Mischen-Button (dauerhaft sichtbar) --- */
     #mixButton {
       padding: 10px 20px;
       background: #b84b37;
@@ -124,7 +135,7 @@
       cursor: pointer;
       font-size: 1rem;
       border-radius: 4px;
-      display: none;
+      margin-bottom: 30px; /* optionaler Abstand */
     }
     #mixButton:hover {
       background: #a43e31;
@@ -153,14 +164,9 @@
       border-radius: 5px;
     }
 
-    /* --- Preview ausblenden bzw. optisch verstecken --- */
-    #preview {
-      display: none; /* wir nutzen hier kein extra Preview, 
-                        nur Crop & dann Mischen */
-    }
-    canvas {
-      display: none;
-    }
+    /* --- Canvas und Preview ausblenden (bzw. optional) --- */
+    #preview { display: none; }
+    canvas    { display: none; }
 
     /* --- Crop-Dialog (Overlay) --- */
     #cropModal {
@@ -252,7 +258,7 @@
       background-color: #a43e31;
     }
 
-    /* --- Konfetti (DOM) --- */
+    /* --- Confetti Container & Animationen (DOM) --- */
     #confetti-container {
       position: fixed; 
       top: 0; left: 0;
@@ -288,9 +294,13 @@
 </head>
 <body>
 
-  <!-- Header-Balken -->
+  <!-- Header-Balken 
+       Titel zweizeilig per <br> -->
   <header>
-    <h1>FCK AFD Bildmischer ;)</h1>
+    <h1>
+      FCK AFD<br>
+      Bildmischer ;)
+    </h1>
   </header>
 
   <!-- Hauptinhalt -->
@@ -314,17 +324,17 @@
       <img src="Icon5.png" class="overlayIcon" data-icon="Icon5.png" alt="Overlay 5" />
     </div>
 
-    <!-- Upload-Fläche mit dummy.png bei ~30% Deckkraft -->
+    <!-- Upload-Fläche mit dummy.png -->
     <div id="dropZone">
-      <p>Ziehe dein Bild hierher<br/>oder klicke zum Auswählen.</p>
+      <p>Ziehe dein Bild hierher<br>oder klicke zum Auswählen.</p>
     </div>
 
-    <!-- Mischen-Button -->
+    <!-- Mischen-Button IMMER sichtbar -->
     <button id="mixButton">Mischen</button>
 
     <!-- Canvas -->
     <canvas id="canvas"></canvas>
-    <!-- Preview nur als hidden fallback, falls man es braucht -->
+    <!-- Preview optional/hidden -->
     <img id="preview" src="dummy.png" alt="Bildvorschau" style="display: none;" />
 
   </main>
@@ -363,11 +373,11 @@
   <!-- Cropper.js JS -->
   <script src="https://unpkg.com/cropperjs/dist/cropper.js"></script>
 
-  <!-- Das JavaScript (inkl. localStorage-Counter, Konfetti etc.) -->
+  <!-- Hier dein bisheriger JS-Code (localStorage-Counter, Konfetti, ...) -->
   <script>
-    /******************************************
-     *    1) Grundvariablen / Selektoren
-     ******************************************/
+    /****************************************
+     * 1) Selektoren, Variablen
+     ****************************************/
     const dropZone     = document.getElementById('dropZone');
     const fileInput    = document.getElementById('fileInput');
     const mixButton    = document.getElementById('mixButton');
@@ -383,13 +393,13 @@
     const cancelCropBtn  = document.getElementById('cancelCropBtn');
 
     // Ergebnis-Dialog
-    const resultModal   = document.getElementById('resultModal');
-    const finalImage    = document.getElementById('finalImage');
-    const downloadBtn   = document.getElementById('downloadBtn');
+    const resultModal = document.getElementById('resultModal');
+    const finalImage  = document.getElementById('finalImage');
+    const downloadBtn = document.getElementById('downloadBtn');
 
     // Footer Counter
-    const mixCounterDiv = document.getElementById('mixCounter');
     let mixCounterValue = 0;
+    const mixCounterDiv = document.getElementById('mixCounter');
 
     // Konfetti
     const confettiContainer = document.getElementById('confetti-container');
@@ -400,10 +410,9 @@
     let uploadedImageDataURL = null;
     let selectedOverlaySrc   = null;
 
-
-    /******************************************
-     *    2) Lokalen Counter auslesen
-     ******************************************/
+    /****************************************
+     * 2) localStorage Counter einlesen
+     ****************************************/
     document.addEventListener('DOMContentLoaded', () => {
       const stored = localStorage.getItem('mixCounterValue');
       if (stored) {
@@ -415,10 +424,9 @@
       mixCounterDiv.textContent = `Bisher gemischt: ${mixCounterValue}`;
     }
 
-
-    /******************************************
-     *    3) Drag & Drop / Klick Upload
-     ******************************************/
+    /****************************************
+     * 3) Drag & Drop / Klick
+     ****************************************/
     dropZone.addEventListener('dragover', (e) => {
       e.preventDefault();
       dropZone.classList.add('hover');
@@ -448,6 +456,7 @@
         cropImage.src = e.target.result;
         cropModal.style.display = 'flex';
 
+        // Alten Cropper zerstören
         if (cropper) {
           cropper.destroy();
           cropper = null;
@@ -463,10 +472,9 @@
       reader.readAsDataURL(file);
     }
 
-
-    /******************************************
-     *    4) Crop-Dialog: OK / Abbrechen
-     ******************************************/
+    /****************************************
+     * 4) Crop-Dialog: OK/Abbrechen
+     ****************************************/
     confirmCropBtn.addEventListener('click', () => {
       if (!cropper) return;
       const croppedCanvas = cropper.getCroppedCanvas({
@@ -475,14 +483,9 @@
       });
       uploadedImageDataURL = croppedCanvas.toDataURL('image/png');
 
-      // Dialog zu
       cropModal.style.display = 'none';
       cropper.destroy();
       cropper = null;
-
-      // Mix-Button zeigen, etc.
-      dropZone.style.display = 'flex';
-      mixButton.style.display = 'inline-block';
     });
 
     cancelCropBtn.addEventListener('click', () => {
@@ -494,10 +497,9 @@
       fileInput.value = '';
     });
 
-
-    /******************************************
-     *    5) Overlay-Auswahl
-     ******************************************/
+    /****************************************
+     * 5) Overlay-Auswahl
+     ****************************************/
     overlayIcons.forEach(icon => {
       icon.addEventListener('click', () => {
         overlayIcons.forEach(i => i.classList.remove('selected'));
@@ -506,11 +508,11 @@
       });
     });
 
-
-    /******************************************
-     *    6) Mischen (Canvas)
-     ******************************************/
+    /****************************************
+     * 6) Mischen (Canvas)
+     ****************************************/
     mixButton.addEventListener('click', () => {
+      // Button ist immer da, aber checken, ob Bild & Overlay?
       if (!uploadedImageDataURL) {
         alert("Bitte erst ein Bild hochladen & zuschneiden!");
         return;
@@ -544,28 +546,25 @@
 
         const finalDataURL = canvas.toDataURL('image/png');
 
-        // Ergebnisdialog
+        // Ergebnisdialog anzeigen
         finalImage.src = finalDataURL;
         resultModal.style.display = 'flex';
 
-        // Konfetti starten
+        // Konfetti
         startConfetti();
 
         // Reset
-        dropZone.style.display = 'flex';
-        mixButton.style.display = 'none';
-        overlayIcons.forEach(i => i.classList.remove('selected'));
-        selectedOverlaySrc = null;
-        uploadedImageDataURL = null;
         fileInput.value = '';
+        uploadedImageDataURL = null;
+        selectedOverlaySrc = null;
+        overlayIcons.forEach(i => i.classList.remove('selected'));
       };
       overlayImg.src = overlaySrc;
     }
 
-
-    /******************************************
-     *    7) Ergebnis-Dialog: Download
-     ******************************************/
+    /****************************************
+     * 7) Ergebnis-Dialog: Download
+     ****************************************/
     downloadBtn.addEventListener('click', () => {
       const dataURL = finalImage.src;
       const a = document.createElement('a');
@@ -587,10 +586,9 @@
       resultModal.style.display = 'none';
     });
 
-
-    /******************************************
-     *    8) Konfetti-Funktionen
-     ******************************************/
+    /****************************************
+     * 8) Konfetti-Funktionen
+     ****************************************/
     function startConfetti() {
       stopConfetti(); // Falls noch läuft
       confettiInterval = setInterval(() => {
@@ -603,7 +601,6 @@
         confettiInterval = null;
       }
     }
-
     function spawnConfetti(count) {
       const colors = [
         '#fce18a', '#ff726d', '#b48def', '#f4306d',
@@ -614,11 +611,9 @@
         const confetti = document.createElement('div');
         confetti.classList.add('confetti');
 
-        // Zufallsfarbe
         const c = colors[Math.floor(Math.random() * colors.length)];
         confetti.style.backgroundColor = c;
 
-        // StartX / EndX -> drift
         const startX = Math.random() * 100; 
         let endX     = startX + (Math.random() * 40 - 20);
         if (endX < 0)   endX = 0;
@@ -626,15 +621,13 @@
         confetti.style.setProperty('--startX', startX + '%');
         confetti.style.setProperty('--endX', endX + '%');
 
-        // Delay
         const delay = Math.random() * 0.4; 
         confetti.style.animationDelay = delay + 's';
 
-        // Hinzufügen + Auto-Remove
         confettiContainer.appendChild(confetti);
         setTimeout(() => {
           confetti.remove();
-        }, (5000 + delay * 1000)); // 5s + delay
+        }, (5000 + delay * 1000));
       }
     }
   </script>
